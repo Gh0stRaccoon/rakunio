@@ -1,0 +1,98 @@
+---
+import Layout from '../layouts/Layout.astro';
+import PlayerBar from '../components/PlayerBar.astro';
+import { ALBUMS } from '../data/tracks';
+import { withBase } from '../utils/base';
+---
+
+<Layout title="Álbumes — Rakunio Music" description="Explora la colección completa de álbumes de música lo-fi en Rakunio.">
+  <section class="albums-header">
+    <h1 class="page-title">Colección de <span class="text-gradient">Álbumes</span></h1>
+    <p class="page-subtitle">Explora los últimos lanzamientos de lo-fi y ritmos ambientales.</p>
+  </section>
+
+  <div class="albums-grid">
+    {ALBUMS.map((album) => (
+      <a href={withBase(`/album/${album.id}`)} class="album-card glass-panel-interactive">
+        <img src={album.cover} alt={album.title} class="album-cover" />
+        <div class="album-details">
+          <span class="album-year">{album.year}</span>
+          <h2 class="album-name">{album.title}</h2>
+          <p class="album-artist">{album.artist}</p>
+          <span class="album-count">{album.tracks.length} temas</span>
+        </div>
+      </a>
+    ))}
+  </div>
+
+  <PlayerBar slot="player" />
+</Layout>
+
+<style>
+  .albums-header {
+    margin: 20px 0 32px;
+    text-align: center;
+  }
+
+  .page-title {
+    font-family: var(--font-heading);
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin-bottom: 8px;
+  }
+
+  .page-subtitle {
+    color: var(--text-muted);
+  }
+
+  .albums-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 24px;
+  }
+
+  .album-card {
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    gap: 16px;
+    text-decoration: none;
+    color: var(--text-main);
+  }
+
+  .album-cover {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    border-radius: var(--radius-sm);
+  }
+
+  .album-details {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .album-year {
+    font-size: 0.75rem;
+    color: var(--accent-cyan);
+    font-family: var(--font-mono);
+  }
+
+  .album-name {
+    font-family: var(--font-heading);
+    font-size: 1.2rem;
+    font-weight: 700;
+  }
+
+  .album-artist {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+  }
+
+  .album-count {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    margin-top: 8px;
+  }
+</style>

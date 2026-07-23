@@ -1,0 +1,58 @@
+---
+import Layout from '../layouts/Layout.astro';
+import CanvasVisualizer from '../components/CanvasVisualizer.astro';
+import LrcLyrics from '../components/LrcLyrics.astro';
+import PlayerBar from '../components/PlayerBar.astro';
+---
+
+<Layout 
+  title="Visualizador & Letras en Vivo — Rakunio"
+  description="Experiencia inmersiva a pantalla completa con espectro de audio WebAudio API y letras sincronizadas LRC."
+>
+  <section class="visualizer-page-header">
+    <h1 class="page-title">Estadio de <span class="text-gradient">Visualización</span></h1>
+    <p class="page-subtitle">Monitorea las frecuencias de audio en tiempo real y sigue la lírica del tema en reproducción.</p>
+  </section>
+
+  <div class="visualizer-full-grid">
+    <div class="col-canvas">
+      <CanvasVisualizer />
+    </div>
+    <div class="col-lyrics">
+      <LrcLyrics />
+    </div>
+  </div>
+
+  <PlayerBar slot="player" />
+</Layout>
+
+<style>
+  .visualizer-page-header {
+    margin: 16px 0 24px;
+    text-align: center;
+  }
+
+  .page-title {
+    font-family: var(--font-heading);
+    font-size: 2.25rem;
+    font-weight: 800;
+  }
+
+  .page-subtitle {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+  }
+
+  .visualizer-full-grid {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 20px;
+    min-height: 480px;
+  }
+
+  @media (max-width: 900px) {
+    .visualizer-full-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

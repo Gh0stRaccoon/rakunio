@@ -1,0 +1,416 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import CanvasVisualizer from '../../components/CanvasVisualizer.astro';
+import LrcLyrics from '../../components/LrcLyrics.astro';
+import { TRACKS, ARTIST_PROFILES } from '../../data/tracks';
+import { withBase } from '../../utils/base';
+
+export function getStaticPaths() {
+  return TRACKS.map((track) => ({
+    params: { id: track.id },
+    props: { track }
+  }));
+}
+
+const { track } = Astro.props;
+
+const trackSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'MusicRecording',
+  'name': track.title,
+  'byArtist': { 
+    '@type': 'MusicGroup', 
+    'name': track.artist,
+    'sameAs': [ARTIST_PROFILES.spotify, ARTIST_PROFILES.youtube, ARTIST_PROFILES.apple].filter(Boolean)
+  },
+  'inAlbum': { '@type': 'MusicAlbum', 'name': track.album },
+  'image': track.cover,
+  'duration': `PT${Math.floor(track.duration / 60)}M${track.duration % 60}S`,
+  'audio': track.audioUrl,
+  'sameAs': [
+    track.externalLinks?.spotify,
+    track.externalLinks?.apple,
+    track.externalLinks?.youtube
+  ].filter(Boolean)
+};
+---
+
+<Layout
+  title={`${track.title} — ${track.artist} | Rakunio`}
+  description={`Escucha ${track.title} de ${track.artist} en Rakunio. Beats libres de derechos.`}
+  image={track.cover}
+  type="music.song"
+  jsonLd={trackSchema}
+>
+  <div class="player-main-workspace glass-panel">
+    <!-- Breadcrumb / Back Header -->
+    <div class="track-nav-bar">
+      <a href={withBase(`/album/${track.albumId}`)} class="back-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="back-icon">
+          <line x1="19" y1="12" x2="5" y2="12"></line>
+          <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        <span>Volver a la carpeta <strong>{track.album}</strong></span>
+      </a>
+    </div>
+
+    <!-- Main 2-Column Grid Workspace -->
+    <div class="track-detail-layout">
+      <!-- Left: Cover Card + Centered Visualizer Overlay + Hero Play Controls -->
+      <div class="track-left-stage">
+        <div class="single-cover-wrapper">
+          <img src={track.cover} alt={track.title} class="single-cover-img" />
+          <div class="visualizer-overlay-container">
+            <CanvasVisualizer />
+          </div>
+        </div>
+
+        <!-- Hero Play Control Button -->
+        <button id="single-hero-play-btn" class="hero-play-now-btn" data-track-id={track.id}>
+          <svg id="single-hero-icon-play" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="play-icon">
+            <polygon points="5 3 19 12 5 21 5 3" fill="currentColor"/>
+          </svg>
+          <svg id="single-hero-icon-pause" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="play-icon hidden">
+            <rect x="6" y="4" width="4" height="16" fill="currentColor"/>
+            <rect x="14" y="4" width="4" height="16" fill="currentColor"/>
+          </svg>
+          <span id="single-hero-btn-label">Reproducir Tema</span>
+        </button>
+      </div>
+
+      <!-- Right: Track Info + Streaming Links + Synchronized Lyrics Viewport -->
+      <div class="track-right-info">
+        <div class="track-header-meta">
+          <span class="album-category-badge">{track.album.toUpperCase()}</span>
+          <h1 class="track-title-heading">{track.title}</h1>
+          <p class="track-artist-sub">Producido por <strong>{track.artist}</strong></p>
+
+          <!-- DSP Platform Badges -->
+          <div class="streaming-platform-links">
+            {track.externalLinks?.spotify && (
+              <a href={track.externalLinks.spotify} target="_blank" rel="noopener noreferrer" class="platform-badge spotify" title="Escuchar en Spotify">
+                <svg viewBox="0 0 24 24" fill="currentColor" class="badge-icon"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.18-.1.2-1.38-.42-.18-.6.42-1.2 1.02-1.38 4.26-1.26 11.28-1.02 15.721 1.62.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
+                <span>Spotify</span>
+              </a>
+            )}
+            {track.externalLinks?.youtube && (
+              <a href={track.externalLinks.youtube} target="_blank" rel="noopener noreferrer" class="platform-badge youtube" title="Escuchar en YouTube Music">
+                <svg viewBox="0 0 24 24" fill="currentColor" class="badge-icon"><path d="M12 0C5.376 0 0 5.376 0 12s5.376 12 12 12 12-5.376 12-12S18.624 0 12 0zm0 19.2c-3.972 0-7.2-3.228-7.2-7.2s3.228-7.2 7.2-7.2 7.2 3.228 7.2 7.2-3.228 7.2-7.2 7.2zm-2.4-10.8v7.2l6-3.6-6-3.6z"/></svg>
+                <span>YouTube</span>
+              </a>
+            )}
+            {track.externalLinks?.apple && (
+              <a href={track.externalLinks.apple} target="_blank" rel="noopener noreferrer" class="platform-badge apple" title="Escuchar en Apple Music">
+                <svg viewBox="0 0 24 24" fill="currentColor" class="badge-icon"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.87c.68-.82 1.14-1.97.98-3.12-1 .04-2.21.67-2.92 1.49-.64.73-1.2 1.91-1.05 3.03 1.12.09 2.26-.54 2.99-1.4z"/></svg>
+                <span>Apple Music</span>
+              </a>
+            )}
+          </div>
+        </div>
+
+        <!-- Lyrics Viewport Container -->
+        <div class="lyrics-card-wrapper">
+          <LrcLyrics lrcContent={track.lrcContent} trackId={track.id} />
+        </div>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<script>
+  import { TRACKS } from '../../data/tracks';
+  import { AudioEngine } from '../../lib/audio/AudioEngine';
+  import { $currentTrack, $isPlaying, playTrack } from '../../lib/audio/PlayerStore';
+
+  function initSingleTrackPage() {
+    AudioEngine.init();
+
+    const playBtn = document.getElementById('single-hero-play-btn');
+    const trackId = playBtn?.getAttribute('data-track-id');
+    const pageTrack = TRACKS.find(t => t.id === trackId);
+
+    if (!pageTrack) return;
+
+    playBtn?.addEventListener('click', () => {
+      const active = $currentTrack.get();
+      const isPlaying = $isPlaying.get();
+
+      if (active && active.id === pageTrack.id) {
+        if (isPlaying) {
+          $isPlaying.set(false);
+        } else {
+          $isPlaying.set(true);
+        }
+      } else {
+        playTrack(pageTrack);
+      }
+    });
+
+    updateSinglePlayUI();
+  }
+
+  function updateSinglePlayUI() {
+    const playBtn = document.getElementById('single-hero-play-btn');
+    const trackId = playBtn?.getAttribute('data-track-id');
+    const iconPlay = document.getElementById('single-hero-icon-play');
+    const iconPause = document.getElementById('single-hero-icon-pause');
+    const label = document.getElementById('single-hero-btn-label');
+
+    const currentTrack = $currentTrack.get();
+    const isPlaying = $isPlaying.get();
+    const isThisTrackPlaying = currentTrack?.id === trackId && isPlaying;
+
+    if (isThisTrackPlaying) {
+      iconPlay?.classList.add('hidden');
+      iconPause?.classList.remove('hidden');
+      if (label) label.textContent = 'Pausar Tema';
+    } else {
+      iconPlay?.classList.remove('hidden');
+      iconPause?.classList.add('hidden');
+      if (label) label.textContent = 'Reproducir Tema';
+    }
+  }
+
+  $isPlaying.subscribe(() => updateSinglePlayUI());
+  $currentTrack.subscribe(() => updateSinglePlayUI());
+
+  document.addEventListener('astro:page-load', () => {
+    initSingleTrackPage();
+  });
+</script>
+
+<style>
+  .player-main-workspace {
+    position: relative;
+    padding: 32px;
+    margin: 20px 0;
+    border-radius: var(--radius-xl);
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    background: rgba(255, 255, 255, 0.45);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    box-shadow: var(--shadow-card);
+  }
+
+  .track-nav-bar {
+    display: flex;
+    align-items: center;
+  }
+
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: var(--transition-smooth);
+    padding: 6px 14px;
+    border-radius: var(--radius-full);
+    background: rgba(255, 255, 255, 0.5);
+  }
+
+  .back-link:hover {
+    color: var(--accent-warm);
+    background: white;
+    transform: translateX(-4px);
+  }
+
+  .back-icon {
+    width: 16px;
+    height: 16px;
+  }
+
+  .track-detail-layout {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 36px;
+    align-items: start;
+  }
+
+  .track-left-stage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .single-cover-wrapper {
+    position: relative;
+    width: 280px;
+    height: 280px;
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+    background: var(--accent-dark);
+  }
+
+  .single-cover-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .visualizer-overlay-container {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    mix-blend-mode: plus-lighter;
+  }
+
+  .hero-play-now-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    width: 100%;
+    max-width: 280px;
+    padding: 14px 24px;
+    background: var(--accent-dark);
+    color: white;
+    border: none;
+    border-radius: var(--radius-full);
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 8px 24px rgba(44, 36, 32, 0.3);
+    transition: var(--transition-bounce);
+  }
+
+  .hero-play-now-btn:hover {
+    transform: translateY(-2px) scale(1.02);
+    background: black;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+  }
+
+  .play-icon {
+    width: 18px;
+    height: 18px;
+  }
+
+  .track-right-info {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .track-header-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .album-category-badge {
+    align-self: flex-start;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    padding: 4px 12px;
+    border-radius: var(--radius-full);
+    background: var(--accent-warm);
+    color: white;
+  }
+
+  .track-title-heading {
+    font-family: var(--font-heading);
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: var(--text-main);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+
+  .track-artist-sub {
+    font-size: 1.1rem;
+    color: var(--text-muted);
+  }
+
+  .streaming-platform-links {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 8px;
+    flex-wrap: wrap;
+  }
+
+  .platform-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: var(--radius-full);
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-decoration: none;
+    transition: var(--transition-smooth);
+    background: rgba(255, 255, 255, 0.6);
+    color: var(--text-main);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+  }
+
+  .platform-badge:hover {
+    transform: translateY(-2px);
+    background: white;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
+  }
+
+  .platform-badge.spotify:hover {
+    color: #1ed760;
+    border-color: #1ed760;
+  }
+
+  .platform-badge.youtube:hover {
+    color: #ff0000;
+    border-color: #ff0000;
+  }
+
+  .platform-badge.apple:hover {
+    color: #fc3c44;
+    border-color: #fc3c44;
+  }
+
+  .badge-icon {
+    width: 16px;
+    height: 16px;
+  }
+
+  .lyrics-card-wrapper {
+    background: rgba(255, 255, 255, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    border-radius: 20px;
+    padding: 20px 24px;
+    box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.02);
+  }
+
+  .hidden {
+    display: none !important;
+  }
+
+  @media (max-width: 900px) {
+    .track-detail-layout {
+      grid-template-columns: 1fr;
+    }
+    .track-left-stage {
+      align-items: center;
+    }
+    .single-cover-wrapper {
+      width: 240px;
+      height: 240px;
+    }
+    .track-title-heading {
+      font-size: 2rem;
+    }
+  }
+</style>
