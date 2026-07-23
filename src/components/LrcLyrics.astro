@@ -234,8 +234,28 @@ const { lrcContent, trackId } = Astro.props;
     display: none;
   }
 
+  :global(.mobile-lyrics-overlay .lyrics-view-container) {
+    height: 100%;
+    max-height: 100%;
+    gap: 0;
+  }
+
+  :global(.mobile-lyrics-overlay .lyrics-scroll-viewport) {
+    height: 100%;
+    max-height: 220px;
+    padding-right: 4px;
+    mask-image: linear-gradient(to bottom, transparent 0%, black 8%, black 92%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 8%, black 92%, transparent 100%);
+  }
+
+  :global(.mobile-lyrics-overlay .lyrics-lines-list) {
+    padding: 30px 0;
+    gap: 12px;
+  }
+
   :global(.mobile-lyrics-overlay .lrc-line) {
     color: rgba(255, 255, 255, 0.55);
+    font-size: 0.9rem;
   }
 
   :global(.mobile-lyrics-overlay .lrc-line:hover) {
@@ -244,5 +264,6 @@ const { lrcContent, trackId } = Astro.props;
 
   :global(.mobile-lyrics-overlay .lrc-line.active) {
     color: var(--accent-warm);
+    font-size: 1.02rem;
   }
 </style>

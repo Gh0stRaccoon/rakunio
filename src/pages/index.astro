@@ -1104,21 +1104,23 @@ const defaultTrack: Track = TRACKS[0] || fallbackTrack;
   .mobile-lyrics-overlay {
     display: none;
     position: absolute;
-    width: 290px;
-    height: 290px;
     top: 50%;
     left: 50%;
-    transform: translate(-50%, -50%) scale(0.95);
-    z-index: 30;
-    background: rgba(26, 20, 17, 0.92);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    transform: translate(-50%, -50%) scale(0.92);
+    width: min(300px, 88vw);
+    height: min(300px, 88vw);
+    z-index: 45;
+    background: rgba(20, 16, 14, 0.95);
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
+    border: 1px solid rgba(255, 255, 255, 0.18);
     border-radius: 24px;
-    padding: 16px 20px;
+    padding: 14px 16px;
     flex-direction: column;
     color: white;
     opacity: 0;
     pointer-events: none;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
     transition:
       opacity 0.3s ease,
       transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);
@@ -1128,6 +1130,11 @@ const defaultTrack: Track = TRACKS[0] || fallbackTrack;
     opacity: 1;
     pointer-events: auto;
     transform: translate(-50%, -50%) scale(1);
+  }
+
+  .stage-carousel-container:has(.mobile-lyrics-overlay.active) .mobile-lyrics-toggle-btn {
+    opacity: 0 !important;
+    pointer-events: none !important;
   }
 
   .mobile-lyrics-toggle-btn {
@@ -1159,7 +1166,9 @@ const defaultTrack: Track = TRACKS[0] || fallbackTrack;
     align-items: center;
     justify-content: space-between;
     padding-bottom: 8px;
+    margin-bottom: 4px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    flex-shrink: 0;
   }
 
   .overlay-title {
@@ -1171,13 +1180,13 @@ const defaultTrack: Track = TRACKS[0] || fallbackTrack;
   }
 
   .overlay-close-btn {
-    background: rgba(255, 255, 255, 0.15);
-    border: none;
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
     color: white;
-    width: 26px;
-    height: 26px;
+    width: 28px;
+    height: 28px;
     border-radius: 50%;
-    font-size: 0.8rem;
+    font-size: 0.85rem;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -1186,7 +1195,7 @@ const defaultTrack: Track = TRACKS[0] || fallbackTrack;
   }
 
   .overlay-close-btn:hover {
-    background: rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.35);
   }
 
   .overlay-lyrics-body {
@@ -1198,6 +1207,107 @@ const defaultTrack: Track = TRACKS[0] || fallbackTrack;
     width: 14px;
     height: 14px;
     color: var(--accent-warm);
+  }
+
+  @media (max-width: 960px) {
+    .player-top-row {
+      grid-template-columns: 1fr;
+    }
+    .volume-row {
+      display: none !important;
+    }
+    .playlist-track-row {
+      grid-template-columns: 24px 40px 1fr 50px 36px;
+    }
+    .playlist-track-album {
+      display: none;
+    }
+    .lyrics-wrapper-desktop {
+      display: none;
+    }
+    .mobile-lyrics-toggle-btn {
+      display: flex;
+    }
+    .mobile-lyrics-overlay {
+      display: flex;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .player-stage-card {
+      padding: 16px;
+    }
+    .stage-carousel-container {
+      height: 270px;
+      overflow: visible;
+    }
+    .cover-card[data-pos="0"] {
+      width: min(240px, 72vw);
+      height: min(240px, 72vw);
+    }
+    .cover-card[data-pos="1"] {
+      display: flex;
+      width: 140px;
+      height: 140px;
+      transform: translateX(125px) scale(0.72) rotateY(-18deg);
+      opacity: 0.5;
+    }
+    .cover-card[data-pos="-1"] {
+      display: flex;
+      width: 140px;
+      height: 140px;
+      transform: translateX(-125px) scale(0.72) rotateY(18deg);
+      opacity: 0.5;
+    }
+    .cover-visualizer-overlay {
+      width: min(230px, 68vw);
+    }
+    .track-title {
+      font-size: 1.6rem;
+    }
+    .controls-row {
+      gap: 16px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .stage-carousel-container {
+      height: 250px;
+      overflow: visible;
+    }
+    .cover-card[data-pos="0"] {
+      width: min(220px, 68vw);
+      height: min(220px, 68vw);
+    }
+    .cover-card[data-pos="1"] {
+      display: flex;
+      width: 120px;
+      height: 120px;
+      transform: translateX(105px) scale(0.68) rotateY(-18deg);
+      opacity: 0.45;
+    }
+    .cover-card[data-pos="-1"] {
+      display: flex;
+      width: 120px;
+      height: 120px;
+      transform: translateX(-105px) scale(0.68) rotateY(18deg);
+      opacity: 0.45;
+    }
+    .playlist-track-row {
+      grid-template-columns: 36px 1fr 45px 28px;
+      gap: 10px;
+      padding: 8px 12px;
+    }
+    .track-idx {
+      display: none;
+    }
+    .playlist-header-title {
+      font-size: 0.78rem;
+    }
+    .folder-filter-tabs {
+      overflow-x: auto;
+      max-width: 100%;
+    }
   }
 
   /* Progress Bar */
