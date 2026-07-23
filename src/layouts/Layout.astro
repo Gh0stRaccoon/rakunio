@@ -1,0 +1,262 @@
+---
+import { ClientRouter } from 'astro:transitions';
+import { withBase } from '../utils/base';
+import { ALBUMS } from '../data/tracks';
+import PersistentBottomPlayer from '../components/PersistentBottomPlayer.astro';
+import '../styles/global.css';
+
+interface Props {
+  title?: string;
+  description?: string;
+  image?: string;
+  type?: string;
+  jsonLd?: object;
+}
+
+const {
+  title = 'Racoon Music — Beats',
+  description = 'Reproductor de beats con espectro en vivo y letras sincronizadas LRC.',
+  image = withBase('/images/og-cover.png'),
+  type = 'website',
+  jsonLd
+} = Astro.props;
+
+const canonicalURL = new URL(Astro.url.pathname, Astro.site || Astro.url.origin);
+const currentPath = Astro.url.pathname;
+---
+
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href={withBase('/favicon.svg')} />
+    <link rel="canonical" href={canonicalURL} />
+    <meta name="generator" content={Astro.generator} />
+
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta name="robots" content="index, follow" />
+
+    <!-- OpenGraph Tags -->
+    <meta property="og:site_name" content="Racoon Music" />
+    <meta property="og:type" content={type} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonicalURL} />
+    <meta property="og:image" content={image} />
+
+    {jsonLd && (
+      <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+    )}
+
+    <ClientRouter />
+  </head>
+  <body>
+    <div class="app-shell">
+      <!-- Left Sidebar Navigation -->
+      <aside class="sidebar glass-panel">
+        <div class="sidebar-brand">
+          <svg class="brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 14a4 4 0 1 1 4-4 4 4 0 0 1-4 4z"/>
+            <circle cx="12" cy="12" r="2"/>
+          </svg>
+          <div class="brand-text-group">
+            <span class="brand-title">RACOON</span>
+            <span class="brand-sub">music beats</span>
+          </div>
+        </div>
+
+        <div class="search-box">
+          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <input type="text" id="sidebar-search-input" placeholder="Buscar beats..." class="search-input" />
+        </div>
+
+        <nav class="sidebar-nav">
+          <span class="nav-section-title">Carpetas</span>
+          
+          <a href={withBase('/')} class={`nav-link ${currentPath === withBase('/') || currentPath === '/' ? 'active' : ''}`}>
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="7" height="7"/>
+              <rect x="14" y="3" width="7" height="7"/>
+              <rect x="14" y="14" width="7" height="7"/>
+              <rect x="3" y="14" width="7" height="7"/>
+            </svg>
+            <span>all</span>
+          </a>
+
+          {ALBUMS.map((album) => (
+            <a href={withBase(`/album/${album.id}`)} class={`nav-link ${currentPath.includes(`/album/${album.id}`) ? 'active' : ''}`}>
+              <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+              </svg>
+              <span>{album.title}</span>
+            </a>
+          ))}
+        </nav>
+      </aside>
+
+      <!-- Right Main Content Canvas -->
+      <main class="main-viewport">
+        <slot />
+      </main>
+    </div>
+
+    <!-- Spotify-Style Persistent Bottom Player Bar -->
+    <PersistentBottomPlayer transition:persist="global-bottom-player-bar" />
+  </body>
+</html>
+
+<style>
+  .app-shell {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    min-height: 100vh;
+    width: 100%;
+    padding: 16px;
+    gap: 20px;
+    max-width: 1600px;
+    margin: 0 auto;
+    padding-bottom: 90px;
+  }
+
+  .sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    padding: 24px;
+    border-radius: var(--radius-lg);
+    background: var(--bg-card);
+    height: fit-content;
+    position: sticky;
+    top: 16px;
+  }
+
+  .sidebar-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .brand-icon {
+    width: 28px;
+    height: 28px;
+    color: var(--accent-warm);
+  }
+
+  .brand-text-group {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .brand-title {
+    font-family: var(--font-heading);
+    font-size: 1.15rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    color: var(--text-main);
+    line-height: 1;
+  }
+
+  .brand-sub {
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    letter-spacing: 0.05em;
+  }
+
+  .search-box {
+    position: relative;
+    width: 100%;
+  }
+
+  .search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 16px;
+    height: 16px;
+    color: var(--text-dim);
+  }
+
+  .search-input {
+    width: 100%;
+    padding: 10px 12px 10px 36px;
+    border-radius: var(--radius-full);
+    border: 1px solid var(--glass-border-dark);
+    background: rgba(255, 255, 255, 0.6);
+    font-size: 0.85rem;
+    color: var(--text-main);
+    transition: var(--transition-smooth);
+  }
+
+  .search-input:focus {
+    outline: none;
+    background: white;
+    border-color: var(--accent-warm);
+    box-shadow: 0 0 0 3px rgba(181, 105, 56, 0.12);
+  }
+
+  .sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .nav-section-title {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-dim);
+    margin-bottom: 4px;
+    padding-left: 8px;
+  }
+
+  .nav-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    border-radius: var(--radius-md);
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: var(--transition-smooth);
+    text-decoration: none;
+  }
+
+  .nav-link:hover {
+    color: var(--text-main);
+    background: rgba(255, 255, 255, 0.7);
+  }
+
+  .nav-link.active {
+    color: var(--accent-warm);
+    background: white;
+    font-weight: 700;
+    box-shadow: 0 4px 12px rgba(181, 105, 56, 0.08);
+  }
+
+  .nav-icon {
+    width: 18px;
+    height: 18px;
+  }
+
+  .main-viewport {
+    width: 100%;
+  }
+
+  @media (max-width: 960px) {
+    .app-shell {
+      grid-template-columns: 1fr;
+    }
+    .sidebar {
+      position: relative;
+      top: 0;
+    }
+  }
+</style>

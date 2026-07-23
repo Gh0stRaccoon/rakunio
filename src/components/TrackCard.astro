@@ -1,0 +1,179 @@
+---
+import type { Track } from '../types/track';
+import { withBase } from '../utils/base';
+
+interface Props {
+  track: Track;
+}
+
+const { track } = Astro.props;
+
+function formatTime(sec: number): string {
+  const m = Math.floor(sec / 60);
+  const s = Math.floor(sec % 60);
+  return `${m}:${s < 10 ? '0' : ''}${s}`;
+}
+---
+
+<div class="track-card glass-panel-interactive" data-track-id={track.id}>
+  <div class="cover-wrapper">
+    <img src={track.cover} alt={track.title} class="track-cover" loading="lazy" />
+    <button class="play-overlay-btn" title="Reproducir Tema" data-play-id={track.id}>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="play-icon">
+        <polygon points="5 3 19 12 5 21 5 3" fill="currentColor"/>
+      </svg>
+    </button>
+  </div>
+
+  <div class="track-info">
+    <a href={withBase(`/track/${track.id}`)} class="track-title">{track.title}</a>
+    <span class="track-artist">{track.artist}</span>
+    <div class="track-meta">
+      <span class="track-album-tag">{track.album}</span>
+      <span class="track-time">{formatTime(track.duration)}</span>
+    </div>
+  </div>
+</div>
+
+<script>
+  import { TRACKS } from '../data/tracks';
+  import { playTrack } from '../lib/audio/PlayerStore';
+
+  async function setupTrackCards() {
+    const playBtns = document.querySelectorAll('[data-play-id]');
+    playBtns.forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const trackId = btn.getAttribute('data-play-id');
+        const foundTrack = TRACKS.find(t => t.id === trackId);
+        if (foundTrack) {
+          playTrack(foundTrack);
+        }
+      });
+    });
+
+    // Extract ID3 embedded artwork dynamically for each card
+    const cards = document.querySelectorAll('.track-card[data-track-id]');
+    if (cards.length > 0) {
+      const { extractAudioMetadata } = await import('../lib/audio/MetadataExtractor');
+      cards.forEach(async (card) => {
+        const trackId = card.getAttribute('data-track-id');
+        const track = TRACKS.find(t => t.id === trackId);
+        if (track && track.audioUrl) {
+          const meta = await extractAudioMetadata(track.audioUrl);
+          if (meta.coverUrl) {
+            const img = card.querySelector('.track-cover') as HTMLImageElement;
+            if (img) img.src = meta.coverUrl;
+          }
+        }
+      });
+    }
+  }
+
+  document.addEventListener('astro:page-load', () => setupTrackCards());
+</script>
+
+<style>
+  .track-card {
+    display: flex;
+    flex-direction: column;
+    padding: 16px;
+    gap: 12px;
+    border-radius: var(--radius-md);
+  }
+
+  .cover-wrapper {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+  }
+
+  .track-cover {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+  }
+
+  .track-card:hover .track-cover {
+    transform: scale(1.06);
+  }
+
+  .play-overlay-btn {
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--gradient-primary);
+    border: none;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transform: scale(0.8);
+    transition: var(--transition-bounce);
+    cursor: pointer;
+    box-shadow: var(--shadow-glow);
+  }
+
+  .cover-wrapper:hover .play-overlay-btn {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  .play-icon {
+    width: 20px;
+    height: 20px;
+  }
+
+  .track-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .track-title {
+    font-family: var(--font-heading);
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-main);
+    text-decoration: none;
+    transition: var(--transition-smooth);
+  }
+
+  .track-title:hover {
+    color: var(--accent-pink);
+  }
+
+  .track-artist {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+
+  .track-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 6px;
+    font-size: 0.75rem;
+  }
+
+  .track-album-tag {
+    background: rgba(168, 85, 247, 0.15);
+    color: var(--accent-purple);
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+  }
+
+  .track-time {
+    font-family: var(--font-mono);
+    color: var(--text-dim);
+  }
+</style>

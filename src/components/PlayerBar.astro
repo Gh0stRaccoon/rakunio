@@ -1,0 +1,369 @@
+---
+---
+
+<div class="player-bar-container glass-panel">
+  <!-- Track Info -->
+  <div class="track-info">
+    <img id="player-cover" src="https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=200&auto=format&fit=crop" alt="Track Cover" class="player-cover-art" />
+    <div class="track-details">
+      <span id="player-title" class="player-title">Code & Chill</span>
+      <span id="player-artist" class="player-artist">Rakunio Lo-Fi</span>
+    </div>
+  </div>
+
+  <!-- Center Controls & Progress Bar -->
+  <div class="player-controls-center">
+    <div class="buttons-row">
+      <button id="btn-prev" class="ctrl-btn" title="Anterior">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="ctrl-icon">
+          <polygon points="19 20 9 12 19 4 19 20" fill="currentColor"/>
+          <line x1="5" y1="19" x2="5" y2="5" stroke-linecap="round"/>
+        </svg>
+      </button>
+
+      <button id="btn-play-pause" class="play-btn" title="Reproducir/Pausar">
+        <svg id="icon-play" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="play-icon">
+          <polygon points="5 3 19 12 5 21 5 3" fill="currentColor"/>
+        </svg>
+        <svg id="icon-pause" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="play-icon hidden">
+          <rect x="6" y="4" width="4" height="16" fill="currentColor"/>
+          <rect x="14" y="4" width="4" height="16" fill="currentColor"/>
+        </svg>
+      </button>
+
+      <button id="btn-next" class="ctrl-btn" title="Siguiente">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="ctrl-icon">
+          <polygon points="5 4 15 12 5 20 5 4" fill="currentColor"/>
+          <line x1="19" y1="5" x2="19" y2="19" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="progress-container">
+      <span id="time-current" class="time-label">0:00</span>
+      <div class="progress-bar-wrapper" id="progress-bar">
+        <div id="progress-fill" class="progress-fill"></div>
+      </div>
+      <span id="time-duration" class="time-label">3:04</span>
+    </div>
+  </div>
+
+  <!-- Right Utilities: Volume & Actions -->
+  <div class="player-utilities">
+    <div class="volume-control">
+      <button id="btn-mute" class="ctrl-btn" title="Silenciar">
+        <svg id="icon-vol-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="ctrl-icon">
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="currentColor"/>
+          <path d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14" stroke-linecap="round"/>
+        </svg>
+        <svg id="icon-vol-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="ctrl-icon hidden">
+          <line x1="1" y1="1" x2="23" y2="23" stroke-linecap="round"/>
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="currentColor"/>
+        </svg>
+      </button>
+      <input id="volume-slider" type="range" min="0" max="1" step="0.01" value="0.8" class="vol-slider" />
+    </div>
+  </div>
+</div>
+
+<script>
+  import { AudioEngine } from '../lib/audio/AudioEngine';
+  import { 
+    $currentTrack, 
+    $isPlaying, 
+    $currentTime, 
+    $duration, 
+    $volume, 
+    $isMuted,
+    togglePlay,
+    playNext,
+    playPrevious,
+    toggleMute,
+    setVolume
+  } from '../lib/audio/PlayerStore';
+
+  let isBarInitialized = false;
+
+  function initPlayerBar() {
+    AudioEngine.init();
+
+    if (isBarInitialized) return;
+    isBarInitialized = true;
+
+    const playBtn = document.getElementById('btn-play-pause');
+    const iconPlay = document.getElementById('icon-play');
+    const iconPause = document.getElementById('icon-pause');
+    const btnNext = document.getElementById('btn-next');
+    const btnPrev = document.getElementById('btn-prev');
+    const btnMute = document.getElementById('btn-mute');
+    const iconVolOn = document.getElementById('icon-vol-on');
+    const iconVolOff = document.getElementById('icon-vol-off');
+    const volSlider = document.getElementById('volume-slider') as HTMLInputElement;
+
+    const cover = document.getElementById('player-cover') as HTMLImageElement;
+    const title = document.getElementById('player-title');
+    const artist = document.getElementById('player-artist');
+    const timeCurrent = document.getElementById('time-current');
+    const timeDuration = document.getElementById('time-duration');
+    const progressFill = document.getElementById('progress-fill');
+    const progressBar = document.getElementById('progress-bar');
+
+    playBtn?.addEventListener('click', () => togglePlay());
+    btnNext?.addEventListener('click', () => playNext());
+    btnPrev?.addEventListener('click', () => playPrevious());
+    btnMute?.addEventListener('click', () => toggleMute());
+
+    volSlider?.addEventListener('input', (e) => {
+      const val = parseFloat((e.target as HTMLInputElement).value);
+      setVolume(val);
+    });
+
+    progressBar?.addEventListener('click', (e) => {
+      const rect = progressBar.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const pct = clickX / rect.width;
+      const dur = $duration.get();
+      if (dur > 0) {
+        AudioEngine.seek(pct * dur);
+      }
+    });
+
+    $currentTrack.subscribe((track) => {
+      if (track) {
+        if (cover) cover.src = track.cover;
+        if (title) title.textContent = track.title;
+        if (artist) artist.textContent = track.artist;
+      }
+    });
+
+    $isPlaying.subscribe((playing) => {
+      if (playing) {
+        iconPlay?.classList.add('hidden');
+        iconPause?.classList.remove('hidden');
+      } else {
+        iconPlay?.classList.remove('hidden');
+        iconPause?.classList.add('hidden');
+      }
+    });
+
+    $currentTime.subscribe((time) => {
+      if (timeCurrent) timeCurrent.textContent = formatTime(time);
+      const dur = $duration.get();
+      if (dur > 0 && progressFill) {
+        const pct = (time / dur) * 100;
+        progressFill.style.width = `${pct}%`;
+      }
+    });
+
+    $duration.subscribe((dur) => {
+      if (timeDuration) timeDuration.textContent = formatTime(dur);
+    });
+
+    $volume.subscribe((vol) => {
+      if (volSlider && !$isMuted.get()) {
+        volSlider.value = vol.toString();
+      }
+    });
+
+    $isMuted.subscribe((muted) => {
+      if (muted) {
+        iconVolOn?.classList.add('hidden');
+        iconVolOff?.classList.remove('hidden');
+      } else {
+        iconVolOn?.classList.remove('hidden');
+        iconVolOff?.classList.add('hidden');
+      }
+    });
+  }
+
+  function formatTime(sec: number): string {
+    if (isNaN(sec) || sec <= 0) return '0:00';
+    const m = Math.floor(sec / 60);
+    const s = Math.floor(sec % 60);
+    return `${m}:${s < 10 ? '0' : ''}${s}`;
+  }
+
+  document.addEventListener('astro:page-load', () => initPlayerBar());
+</script>
+
+<style>
+  .player-bar-container {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: calc(100% - 40px);
+    max-width: 1100px;
+    z-index: 100;
+    padding: 12px 24px;
+    display: grid;
+    grid-template-columns: 1fr 2fr 1fr;
+    align-items: center;
+    gap: 20px;
+    border-radius: var(--radius-lg);
+    background: rgba(15, 15, 24, 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border-glow);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+  }
+
+  .track-info {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-width: 0;
+  }
+
+  .player-cover-art {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-sm);
+    object-fit: cover;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  }
+
+  .track-details {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .player-title {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    font-size: 0.95rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .player-artist {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+  }
+
+  .player-controls-center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .buttons-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .ctrl-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition-smooth);
+  }
+
+  .ctrl-btn:hover {
+    color: var(--text-main);
+  }
+
+  .ctrl-icon {
+    width: 18px;
+    height: 18px;
+  }
+
+  .play-btn {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: var(--gradient-primary);
+    border: none;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: var(--shadow-glow);
+    transition: var(--transition-bounce);
+  }
+
+  .play-btn:hover {
+    transform: scale(1.08);
+  }
+
+  .play-icon {
+    width: 18px;
+    height: 18px;
+  }
+
+  .progress-container {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+  }
+
+  .time-label {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    min-width: 36px;
+    text-align: center;
+  }
+
+  .progress-bar-wrapper {
+    flex: 1;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    width: 0%;
+    background: var(--gradient-primary);
+    border-radius: 3px;
+    transition: width 0.1s linear;
+  }
+
+  .player-utilities {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+  }
+
+  .volume-control {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .vol-slider {
+    width: 80px;
+    accent-color: var(--accent-purple);
+    cursor: pointer;
+  }
+
+  .hidden {
+    display: none !important;
+  }
+
+  @media (max-width: 768px) {
+    .player-bar-container {
+      grid-template-columns: 1fr auto;
+      padding: 10px 16px;
+      bottom: 10px;
+    }
+    .player-utilities {
+      display: none;
+    }
+  }
+</style>

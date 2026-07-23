@@ -1,0 +1,490 @@
+---
+import { withBase } from '../utils/base';
+---
+
+<div id="global-bottom-player-bar" class="global-bottom-player-bar hidden">
+  <div class="bottom-player-inner">
+    <!-- Left: Track Cover & Meta -->
+    <div class="bottom-track-info" id="bottom-track-info-clickable" title="Ir a la canción actual">
+      <img id="bottom-track-cover" src={withBase('/favicon.svg')} alt="Cover" class="bottom-cover-img" />
+      <div class="bottom-track-text">
+        <span id="bottom-track-title" class="bottom-track-title">Sin reproducción</span>
+        <span id="bottom-track-artist" class="bottom-track-artist">Rakun.io</span>
+      </div>
+    </div>
+
+    <!-- Center: Playback Controls & Progress Bar -->
+    <div class="bottom-center-controls">
+      <div class="bottom-btn-group">
+        <button id="bottom-btn-shuffle" class="bottom-icon-btn" title="Modo Aleatorio">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="bottom-icon">
+            <polyline points="16 3 21 3 21 8"/>
+            <line x1="4" y1="20" x2="21" y2="3"/>
+            <polyline points="21 16 21 21 16 21"/>
+            <line x1="15" y1="15" x2="21" y2="21"/>
+          </svg>
+        </button>
+
+        <button id="bottom-btn-prev" class="bottom-icon-btn" title="Anterior">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="bottom-icon">
+            <polygon points="19 20 9 12 19 4 19 20" fill="currentColor"/>
+            <line x1="5" y1="19" x2="5" y2="5" stroke-linecap="round"/>
+          </svg>
+        </button>
+
+        <button id="bottom-btn-play" class="bottom-play-btn" title="Reproducir / Pausar">
+          <svg id="bottom-icon-play" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="bottom-play-icon">
+            <polygon points="5 3 19 12 5 21 5 3" fill="currentColor"/>
+          </svg>
+          <svg id="bottom-icon-pause" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="bottom-play-icon hidden">
+            <rect x="6" y="4" width="4" height="16" fill="currentColor"/>
+            <rect x="14" y="4" width="4" height="16" fill="currentColor"/>
+          </svg>
+        </button>
+
+        <button id="bottom-btn-next" class="bottom-icon-btn" title="Siguiente">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="bottom-icon">
+            <polygon points="5 4 15 12 5 20 5 4" fill="currentColor"/>
+            <line x1="19" y1="5" x2="19" y2="19" stroke-linecap="round"/>
+          </svg>
+        </button>
+
+        <button id="bottom-btn-repeat" class="bottom-icon-btn" title="Modo Repetir">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="bottom-icon">
+            <polyline points="17 1 21 5 17 9"/>
+            <path d="M3 11V9a4 4 0 0 1 4-4h14"/>
+            <polyline points="7 23 3 19 7 15"/>
+            <path d="M21 13v2a4 4 0 0 1-4 4H3"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Seekbar Row -->
+      <div class="bottom-seekbar-row">
+        <span id="bottom-time-current" class="bottom-time-stamp">0:00</span>
+        <div id="bottom-seek-bar" class="bottom-seek-track">
+          <div id="bottom-seek-fill" class="bottom-seek-fill"></div>
+        </div>
+        <span id="bottom-time-duration" class="bottom-time-stamp">2:25</span>
+      </div>
+    </div>
+
+    <!-- Right: Volume -->
+    <div class="bottom-right-group">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="bottom-vol-icon">
+        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="currentColor"/>
+      </svg>
+      <input id="bottom-vol-slider" type="range" min="0" max="1" step="0.01" value="0.8" class="bottom-vol-slider" />
+    </div>
+  </div>
+</div>
+
+<script>
+  import { navigate } from 'astro:transitions/client';
+  import { AudioEngine } from '../lib/audio/AudioEngine';
+  import { 
+    $currentTrack, 
+    $isPlaying, 
+    $currentTime, 
+    $duration, 
+    $volume,
+    $isShuffle,
+    $repeatMode,
+    togglePlay,
+    toggleShuffle,
+    cycleRepeatMode,
+    playNext,
+    playPrevious,
+    setVolume
+  } from '../lib/audio/PlayerStore';
+  import { withBase } from '../utils/base';
+
+  function initBottomPlayerBar() {
+    const playBtn = document.getElementById('bottom-btn-play');
+    const btnNext = document.getElementById('bottom-btn-next');
+    const btnPrev = document.getElementById('bottom-btn-prev');
+    const btnShuffle = document.getElementById('bottom-btn-shuffle');
+    const btnRepeat = document.getElementById('bottom-btn-repeat');
+    const volSlider = document.getElementById('bottom-vol-slider') as HTMLInputElement;
+    const seekBar = document.getElementById('bottom-seek-bar');
+    const clickableInfo = document.getElementById('bottom-track-info-clickable');
+
+    playBtn?.addEventListener('click', () => togglePlay());
+    btnNext?.addEventListener('click', () => playNext());
+    btnPrev?.addEventListener('click', () => playPrevious());
+    btnShuffle?.addEventListener('click', () => toggleShuffle());
+    btnRepeat?.addEventListener('click', () => cycleRepeatMode());
+
+    volSlider?.addEventListener('input', (e) => {
+      setVolume(parseFloat((e.target as HTMLInputElement).value));
+    });
+
+    seekBar?.addEventListener('click', (e) => {
+      const rect = seekBar.getBoundingClientRect();
+      const pct = (e.clientX - rect.left) / rect.width;
+      const dur = $duration.get();
+      if (dur > 0) {
+        AudioEngine.seek(pct * dur);
+      }
+    });
+
+    clickableInfo?.addEventListener('click', () => {
+      const cur = $currentTrack.get();
+      if (cur) {
+        navigate(withBase(`/track/${cur.id}`));
+      }
+    });
+
+    updateUI();
+  }
+
+  function updateUI() {
+    const track = $currentTrack.get();
+    if (track) {
+      const cover = document.getElementById('bottom-track-cover') as HTMLImageElement;
+      const title = document.getElementById('bottom-track-title');
+      const artist = document.getElementById('bottom-track-artist');
+
+      if (cover && track.cover) cover.src = track.cover;
+      if (title && track.title) title.textContent = track.title;
+      if (artist && track.artist) artist.textContent = track.artist;
+    }
+
+    updatePlayIcon($isPlaying.get());
+    updateShuffleIcon($isShuffle.get());
+    updateRepeatIcon($repeatMode.get());
+    checkBottomBarVisibility();
+  }
+
+  function checkBottomBarVisibility() {
+    const playerBar = document.getElementById('global-bottom-player-bar');
+    if (!playerBar) return;
+
+    const currentTrack = $currentTrack.get();
+    const currentPath = window.location.pathname;
+
+    if (currentTrack) {
+      const isTrackPage = currentPath.includes(`/track/${currentTrack.id}`);
+      const isAlbumPage = currentPath.includes(`/album/${currentTrack.albumId}`);
+      const isHome = (currentPath === '/' || currentPath === withBase('/') || currentPath === '/rakunio/') && currentTrack.albumId === 'rakunio';
+
+      const isCurrentTrackVisibleOnThisPage = isTrackPage || isAlbumPage || isHome;
+
+      if (!isCurrentTrackVisibleOnThisPage) {
+        playerBar.classList.remove('hidden');
+        playerBar.classList.add('visible');
+      } else {
+        playerBar.classList.remove('visible');
+        playerBar.classList.add('hidden');
+      }
+    } else {
+      playerBar.classList.remove('visible');
+      playerBar.classList.add('hidden');
+    }
+  }
+
+  function updatePlayIcon(playing: boolean) {
+    const iconPlay = document.getElementById('bottom-icon-play');
+    const iconPause = document.getElementById('bottom-icon-pause');
+    if (playing) {
+      iconPlay?.classList.add('hidden');
+      iconPause?.classList.remove('hidden');
+    } else {
+      iconPlay?.classList.remove('hidden');
+      iconPause?.classList.add('hidden');
+    }
+  }
+
+  function updateShuffleIcon(isShuffle: boolean) {
+    const btn = document.getElementById('bottom-btn-shuffle');
+    if (btn) {
+      if (isShuffle) btn.classList.add('active');
+      else btn.classList.remove('active');
+    }
+  }
+
+  function updateRepeatIcon(mode: string) {
+    const btn = document.getElementById('bottom-btn-repeat');
+    if (btn) {
+      btn.classList.remove('active', 'active-one');
+      if (mode === 'all') btn.classList.add('active');
+      else if (mode === 'one') btn.classList.add('active', 'active-one');
+    }
+  }
+
+  // Reactive Subscriptions
+  $currentTrack.subscribe((track) => {
+    if (track) {
+      const cover = document.getElementById('bottom-track-cover') as HTMLImageElement;
+      const title = document.getElementById('bottom-track-title');
+      const artist = document.getElementById('bottom-track-artist');
+
+      if (cover && track.cover) cover.src = track.cover;
+      if (title && track.title) title.textContent = track.title;
+      if (artist && track.artist) artist.textContent = track.artist;
+    }
+    checkBottomBarVisibility();
+  });
+
+  $isPlaying.subscribe((playing) => {
+    updatePlayIcon(playing);
+    checkBottomBarVisibility();
+  });
+
+  $isShuffle.subscribe((isShuffle) => updateShuffleIcon(isShuffle));
+  $repeatMode.subscribe((mode) => updateRepeatIcon(mode));
+
+  $currentTime.subscribe((time) => {
+    const current = document.getElementById('bottom-time-current');
+    const fill = document.getElementById('bottom-seek-fill');
+    if (current) current.textContent = formatTime(time);
+    const dur = $duration.get();
+    if (dur > 0 && fill) {
+      fill.style.width = `${(time / dur) * 100}%`;
+    }
+  });
+
+  $duration.subscribe((dur) => {
+    const duration = document.getElementById('bottom-time-duration');
+    if (duration) duration.textContent = formatTime(dur);
+  });
+
+  $volume.subscribe((vol) => {
+    const slider = document.getElementById('bottom-vol-slider') as HTMLInputElement;
+    if (slider) slider.value = vol.toString();
+  });
+
+  function formatTime(sec: number): string {
+    if (isNaN(sec) || sec <= 0) return '0:00';
+    const m = Math.floor(sec / 60);
+    const s = Math.floor(sec % 60);
+    return `${m}:${s < 10 ? '0' : ''}${s}`;
+  }
+
+  document.addEventListener('astro:page-load', () => {
+    initBottomPlayerBar();
+  });
+</script>
+
+<style>
+  .global-bottom-player-bar {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(120%);
+    width: calc(100% - 40px);
+    max-width: 1080px;
+    z-index: 999;
+    background: rgba(26, 20, 17, 0.92);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: var(--radius-full);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+    padding: 10px 24px;
+    transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.4s ease;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .global-bottom-player-bar.visible {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .bottom-player-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+  }
+
+  .bottom-track-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    min-width: 220px;
+  }
+
+  .bottom-track-info:hover .bottom-track-title {
+    color: var(--accent-warm);
+  }
+
+  .bottom-cover-img {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    object-fit: cover;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  }
+
+  .bottom-track-text {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .bottom-track-title {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: white;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: var(--transition-smooth);
+  }
+
+  .bottom-track-artist {
+    font-size: 0.78rem;
+    color: rgba(255, 255, 255, 0.65);
+  }
+
+  .bottom-center-controls {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    flex: 1;
+    max-width: 520px;
+  }
+
+  .bottom-btn-group {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .bottom-icon-btn {
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.65);
+    cursor: pointer;
+    padding: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition-smooth);
+    position: relative;
+  }
+
+  .bottom-icon-btn:hover {
+    color: white;
+  }
+
+  .bottom-icon-btn.active {
+    color: var(--accent-warm);
+  }
+
+  .bottom-icon-btn.active-one::after {
+    content: '1';
+    position: absolute;
+    top: 0;
+    right: 0;
+    font-size: 0.6rem;
+    font-weight: 800;
+    color: var(--accent-warm);
+  }
+
+  .bottom-icon {
+    width: 16px;
+    height: 16px;
+  }
+
+  .bottom-play-btn {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: white;
+    color: var(--accent-dark);
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: var(--transition-bounce);
+  }
+
+  .bottom-play-btn:hover {
+    transform: scale(1.08);
+    background: var(--accent-warm);
+    color: white;
+  }
+
+  .bottom-play-icon {
+    width: 16px;
+    height: 16px;
+  }
+
+  .bottom-seekbar-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+  }
+
+  .bottom-time-stamp {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: rgba(255, 255, 255, 0.55);
+    min-width: 32px;
+  }
+
+  .bottom-seek-track {
+    flex: 1;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 2px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .bottom-seek-fill {
+    height: 100%;
+    width: 0%;
+    background: var(--accent-warm);
+    border-radius: 2px;
+  }
+
+  .bottom-right-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 130px;
+    justify-content: flex-end;
+  }
+
+  .bottom-vol-icon {
+    width: 16px;
+    height: 16px;
+    color: rgba(255, 255, 255, 0.6);
+  }
+
+  .bottom-vol-slider {
+    width: 80px;
+    accent-color: var(--accent-warm);
+    cursor: pointer;
+    height: 4px;
+  }
+
+  .hidden {
+    display: none !important;
+  }
+
+  @media (max-width: 768px) {
+    .global-bottom-player-bar {
+      bottom: 12px;
+      width: calc(100% - 24px);
+      padding: 8px 16px;
+    }
+    .bottom-right-group {
+      display: none;
+    }
+    .bottom-track-info {
+      min-width: auto;
+      max-width: 140px;
+    }
+  }
+</style>
