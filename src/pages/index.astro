@@ -1672,4 +1672,67 @@ const defaultTrack: Track = TRACKS[0] || fallbackTrack;
       display: flex;
     }
   }
+
+  @media (max-width: 640px) {
+    .player-stage-card {
+      padding: 16px;
+    }
+    .stage-carousel-container {
+      height: 260px;
+      overflow: hidden;
+    }
+    .cover-card[data-pos="0"] {
+      width: min(250px, 75vw);
+      height: min(250px, 75vw);
+    }
+    .cover-card[data-pos="1"] {
+      transform: translateX(110px) scale(0.65) rotateY(-18deg);
+      opacity: 0.35;
+    }
+    .cover-card[data-pos="-1"] {
+      transform: translateX(-110px) scale(0.65) rotateY(18deg);
+      opacity: 0.35;
+    }
+    .cover-visualizer-overlay {
+      width: min(240px, 70vw);
+    }
+    .track-title {
+      font-size: 1.6rem;
+    }
+    .controls-row {
+      gap: 16px;
+    }
+    .volume-row {
+      width: 90%;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .stage-carousel-container {
+      height: 230px;
+    }
+    .cover-card[data-pos="0"] {
+      width: min(220px, 72vw);
+      height: min(220px, 72vw);
+    }
+    .cover-card[data-pos="1"],
+    .cover-card[data-pos="-1"] {
+      display: none;
+    }
+    .playlist-track-row {
+      grid-template-columns: 36px 1fr 45px 28px;
+      gap: 10px;
+      padding: 8px 12px;
+    }
+    .track-idx {
+      display: none;
+    }
+    .playlist-header-title {
+      font-size: 0.78rem;
+    }
+    .folder-filter-tabs {
+      overflow-x: auto;
+      max-width: 100%;
+    }
+  }
 </style>

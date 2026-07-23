@@ -53,18 +53,49 @@ const currentPath = Astro.url.pathname;
     <ClientRouter />
   </head>
   <body>
+    <!-- Mobile Top Header Bar (only visible on mobile <= 960px) -->
+    <header class="mobile-top-bar glass-panel">
+      <a href={withBase('/')} class="mobile-brand">
+        <svg class="brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 14a4 4 0 1 1 4-4 4 4 0 0 1-4 4z"/>
+          <circle cx="12" cy="12" r="2"/>
+        </svg>
+        <span class="brand-title">RACOON <small>music beats</small></span>
+      </a>
+
+      <button id="mobile-menu-toggle" class="mobile-menu-btn" aria-label="Abrir menú de navegación">
+        <svg class="hamburger-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+          <line x1="4" y1="6" x2="20" y2="6"/>
+          <line x1="4" y1="12" x2="20" y2="12"/>
+          <line x1="4" y1="18" x2="20" y2="18"/>
+        </svg>
+      </button>
+    </header>
+
+    <!-- Backdrop Overlay for Mobile Drawer -->
+    <div id="mobile-drawer-backdrop" class="mobile-drawer-backdrop"></div>
+
     <div class="app-shell">
-      <!-- Left Sidebar Navigation -->
-      <aside class="sidebar glass-panel">
-        <div class="sidebar-brand">
-          <svg class="brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 14a4 4 0 1 1 4-4 4 4 0 0 1-4 4z"/>
-            <circle cx="12" cy="12" r="2"/>
-          </svg>
-          <div class="brand-text-group">
-            <span class="brand-title">RACOON</span>
-            <span class="brand-sub">music beats</span>
+      <!-- Left Sidebar Navigation / Mobile Drawer -->
+      <aside id="sidebar-drawer" class="sidebar glass-panel">
+        <div class="sidebar-header-mobile">
+          <div class="sidebar-brand">
+            <svg class="brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 14a4 4 0 1 1 4-4 4 4 0 0 1-4 4z"/>
+              <circle cx="12" cy="12" r="2"/>
+            </svg>
+            <div class="brand-text-group">
+              <span class="brand-title">RACOON</span>
+              <span class="brand-sub">music beats</span>
+            </div>
           </div>
+
+          <button id="mobile-drawer-close" class="drawer-close-btn" aria-label="Cerrar menú">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="close-icon">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
         </div>
 
         <div class="search-box">
@@ -107,6 +138,38 @@ const currentPath = Astro.url.pathname;
 
     <!-- Spotify-Style Persistent Bottom Player Bar -->
     <PersistentBottomPlayer transition:persist="global-bottom-player-bar" />
+
+    <script>
+      function initMobileMenu() {
+        const toggleBtn = document.getElementById('mobile-menu-toggle');
+        const closeBtn = document.getElementById('mobile-drawer-close');
+        const drawer = document.getElementById('sidebar-drawer');
+        const backdrop = document.getElementById('mobile-drawer-backdrop');
+        const navLinks = drawer?.querySelectorAll('.nav-link');
+
+        function openMenu() {
+          drawer?.classList.add('mobile-open');
+          backdrop?.classList.add('active');
+          document.body.style.overflow = 'hidden';
+        }
+
+        function closeMenu() {
+          drawer?.classList.remove('mobile-open');
+          backdrop?.classList.remove('active');
+          document.body.style.overflow = '';
+        }
+
+        toggleBtn?.addEventListener('click', openMenu);
+        closeBtn?.addEventListener('click', closeMenu);
+        backdrop?.addEventListener('click', closeMenu);
+
+        navLinks?.forEach(link => {
+          link.addEventListener('click', closeMenu);
+        });
+      }
+
+      document.addEventListener('astro:page-load', () => initMobileMenu());
+    </script>
   </body>
 </html>
 
@@ -116,11 +179,72 @@ const currentPath = Astro.url.pathname;
     grid-template-columns: 260px 1fr;
     min-height: 100vh;
     width: 100%;
+    max-width: 1600px;
     padding: 16px;
     gap: 20px;
-    max-width: 1600px;
     margin: 0 auto;
     padding-bottom: 90px;
+    overflow-x: hidden;
+  }
+
+  .mobile-top-bar {
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    margin: 12px 12px 0 12px;
+    border-radius: var(--radius-md);
+    background: var(--bg-card);
+    position: sticky;
+    top: 12px;
+    z-index: 100;
+  }
+
+  .mobile-brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+  }
+
+  .mobile-brand .brand-title {
+    font-family: var(--font-heading);
+    font-size: 1rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    color: var(--text-main);
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+  }
+
+  .mobile-brand .brand-title small {
+    font-size: 0.68rem;
+    font-weight: 500;
+    color: var(--text-dim);
+  }
+
+  .mobile-menu-btn {
+    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid var(--glass-border-dark);
+    color: var(--text-main);
+    padding: 8px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+  }
+
+  .mobile-menu-btn:hover {
+    background: white;
+    transform: scale(1.05);
+  }
+
+  .hamburger-icon {
+    width: 20px;
+    height: 20px;
   }
 
   .sidebar {
@@ -133,6 +257,55 @@ const currentPath = Astro.url.pathname;
     height: fit-content;
     position: sticky;
     top: 16px;
+  }
+
+  .sidebar-header-mobile {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .drawer-close-btn {
+    display: none;
+    background: rgba(0, 0, 0, 0.06);
+    border: none;
+    color: var(--text-muted);
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+  }
+
+  .drawer-close-btn:hover {
+    background: rgba(0, 0, 0, 0.12);
+    color: var(--text-main);
+  }
+
+  .close-icon {
+    width: 18px;
+    height: 18px;
+  }
+
+  .mobile-drawer-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(31, 26, 23, 0.5);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 999;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+  }
+
+  .mobile-drawer-backdrop.active {
+    opacity: 1;
+    pointer-events: auto;
   }
 
   .sidebar-brand {
@@ -248,15 +421,45 @@ const currentPath = Astro.url.pathname;
 
   .main-viewport {
     width: 100%;
+    overflow-x: hidden;
   }
 
   @media (max-width: 960px) {
+    .mobile-top-bar {
+      display: flex;
+    }
+
+    .mobile-drawer-backdrop {
+      display: block;
+    }
+
+    .drawer-close-btn {
+      display: flex;
+    }
+
     .app-shell {
       grid-template-columns: 1fr;
+      padding: 12px;
+      gap: 12px;
     }
+
     .sidebar {
-      position: relative;
+      position: fixed;
       top: 0;
+      left: 0;
+      width: 280px;
+      height: 100vh;
+      max-height: 100vh;
+      z-index: 1000;
+      transform: translateX(-100%);
+      transition: transform 0.35s cubic-bezier(0.25, 1, 0.5, 1);
+      border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+      overflow-y: auto;
+    }
+
+    .sidebar.mobile-open {
+      transform: translateX(0);
     }
   }
 </style>

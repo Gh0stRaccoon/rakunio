@@ -487,4 +487,31 @@ import { withBase } from '../utils/base';
       max-width: 140px;
     }
   }
+
+  @media (max-width: 480px) {
+    .global-bottom-player-bar {
+      bottom: 8px;
+      width: calc(100% - 16px);
+      padding: 6px 12px;
+    }
+    .bottom-player-inner {
+      gap: 10px;
+    }
+    .bottom-btn-group {
+      gap: 10px;
+    }
+    .bottom-track-info {
+      max-width: 100px;
+    }
+    .bottom-cover-img {
+      width: 36px;
+      height: 36px;
+    }
+    .bottom-track-title {
+      font-size: 0.8rem;
+    }
+    .bottom-track-artist {
+      font-size: 0.7rem;
+    }
+  }
 </style>
