@@ -1793,21 +1793,28 @@ const defaultTrack: Track = TRACKS[0] || fallbackTrack;
     .stage-carousel-container {
       height: 260px;
       overflow: hidden;
+      border-radius: 20px;
     }
     .cover-card[data-pos="0"] {
-      width: min(250px, 75vw);
-      height: min(250px, 75vw);
+      width: min(230px, 70vw);
+      height: min(230px, 70vw);
     }
     .cover-card[data-pos="1"] {
-      transform: translateX(110px) scale(0.65) rotateY(-18deg);
-      opacity: 0.35;
+      display: flex;
+      width: 130px;
+      height: 130px;
+      transform: translateX(110px) scale(0.68) rotateY(-16deg);
+      opacity: 0.45;
     }
     .cover-card[data-pos="-1"] {
-      transform: translateX(-110px) scale(0.65) rotateY(18deg);
-      opacity: 0.35;
+      display: flex;
+      width: 130px;
+      height: 130px;
+      transform: translateX(-110px) scale(0.68) rotateY(16deg);
+      opacity: 0.45;
     }
     .cover-visualizer-overlay {
-      width: min(240px, 70vw);
+      width: min(220px, 65vw);
     }
     .track-title {
       font-size: 1.6rem;
@@ -1815,22 +1822,30 @@ const defaultTrack: Track = TRACKS[0] || fallbackTrack;
     .controls-row {
       gap: 16px;
     }
-    .volume-row {
-      width: 90%;
-    }
   }
 
   @media (max-width: 480px) {
     .stage-carousel-container {
-      height: 230px;
+      height: 240px;
+      overflow: hidden;
     }
     .cover-card[data-pos="0"] {
-      width: min(220px, 72vw);
-      height: min(220px, 72vw);
+      width: min(210px, 66vw);
+      height: min(210px, 66vw);
     }
-    .cover-card[data-pos="1"],
+    .cover-card[data-pos="1"] {
+      display: flex;
+      width: 110px;
+      height: 110px;
+      transform: translateX(95px) scale(0.65) rotateY(-15deg);
+      opacity: 0.4;
+    }
     .cover-card[data-pos="-1"] {
-      display: none;
+      display: flex;
+      width: 110px;
+      height: 110px;
+      transform: translateX(-95px) scale(0.65) rotateY(15deg);
+      opacity: 0.4;
     }
     .playlist-track-row {
       grid-template-columns: 36px 1fr 45px 28px;

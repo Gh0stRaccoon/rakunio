@@ -161,14 +161,16 @@ import { withBase } from '../utils/base';
     if (!playerBar) return;
 
     const currentTrack = $currentTrack.get();
-    const currentPath = window.location.pathname;
+    const currentPath = window.location.pathname.replace(/\/+$/, '') || '/';
+    const baseHome = withBase('/').replace(/\/+$/, '') || '/';
 
-    if (currentTrack) {
+    const isHome = currentPath === '/' || currentPath === baseHome || currentPath === '/rakunio' || currentPath.endsWith('/rakunio');
+
+    if (currentTrack && !isHome) {
       const isTrackPage = currentPath.includes(`/track/${currentTrack.id}`);
       const isAlbumPage = currentPath.includes(`/album/${currentTrack.albumId}`);
-      const isHome = (currentPath === '/' || currentPath === withBase('/') || currentPath === '/rakunio/') && currentTrack.albumId === 'rakunio';
 
-      const isCurrentTrackVisibleOnThisPage = isTrackPage || isAlbumPage || isHome;
+      const isCurrentTrackVisibleOnThisPage = isTrackPage || isAlbumPage;
 
       if (!isCurrentTrackVisibleOnThisPage) {
         playerBar.classList.remove('hidden');
