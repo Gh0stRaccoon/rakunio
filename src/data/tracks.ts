@@ -144,22 +144,9 @@ function scanMusicGlob(): { tracks: Track[]; albums: Album[] } {
     }
   }
 
-  // Ensure 'rakunio' album and tracks are ordered first by default
-  const albums = Array.from(albumsMap.values()).sort((a, b) => {
-    if (a.id === 'rakunio') return -1;
-    if (b.id === 'rakunio') return 1;
-    return a.title.localeCompare(b.title);
-  });
-
-  tracks.sort((a, b) => {
-    if (a.albumId === 'rakunio' && b.albumId !== 'rakunio') return -1;
-    if (a.albumId !== 'rakunio' && b.albumId === 'rakunio') return 1;
-    return a.title.localeCompare(b.title);
-  });
-
   return {
     tracks,
-    albums
+    albums: Array.from(albumsMap.values())
   };
 }
 
