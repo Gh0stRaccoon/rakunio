@@ -1,22 +1,21 @@
 export interface ExtractedMetadata {
-  coverUrl?: string;
+  title?: string | undefined;
+  artist?: string | undefined;
+  album?: string | undefined;
+  coverUrl?: string | undefined;
 }
 
 const coverCache = new Map<string, string>();
 
-/**
- * Extracts embedded ID3v2 APIC/PIC album art from an MP3 file URL using pure browser Fetch & DataView.
- * Searches for 'APIC' or 'PIC' frame tags and JPEG (0xFF, 0xD8, 0xFF) or PNG (0x89, 0x50, 0x4E, 0x47) headers directly within ID3 frames.
- */
 export async function extractAudioMetadata(audioUrl: string): Promise<ExtractedMetadata> {
   if (coverCache.has(audioUrl)) {
     return { coverUrl: coverCache.get(audioUrl) };
   }
 
   try {
-    // Fetch initial 1.5MB of the MP3 file to cover large ID3 headers & embedded artwork
+    // Fetch first 128KB to parse ID3 tags
     const response = await fetch(audioUrl, {
-      headers: { Range: 'bytes=0-1572864' }
+      headers: { Range: 'bytes=0-131072' }
     });
 
     if (!response.ok && response.status !== 206) {
@@ -26,67 +25,59 @@ export async function extractAudioMetadata(audioUrl: string): Promise<ExtractedM
     const buffer = await response.arrayBuffer();
     const bytes = new Uint8Array(buffer);
 
-    // Verify ID3 magic bytes 'ID3'
-    if (bytes[0] !== 0x49 || bytes[1] !== 0x44 || bytes[2] !== 0x33) {
-      return {};
-    }
+    // ID3v2 header check: "ID3"
+    if (bytes[0] === 0x49 && bytes[1] === 0x44 && bytes[2] === 0x33) {
+      // Find APIC / PIC frame
+      const apicIndex = findFrameIndex(bytes, 'APIC');
+      if (apicIndex !== -1) {
+        const b4 = bytes[apicIndex + 4] ?? 0;
+        const b5 = bytes[apicIndex + 5] ?? 0;
+        const b6 = bytes[apicIndex + 6] ?? 0;
+        const b7 = bytes[apicIndex + 7] ?? 0;
+        const frameLen = (b4 << 24) | (b5 << 16) | (b6 << 8) | b7;
+        const frameStart = apicIndex + 10;
+        const frameData = bytes.subarray(frameStart, frameStart + frameLen);
 
-    // Find 'APIC' or 'PIC' frame tag in ID3 buffer (searching up to 300KB)
-    let apicIndex = -1;
-    const maxHeaderScan = Math.min(bytes.length - 4, 300000);
+        const mimeEnd = findByte(frameData, 0x00, 1);
+        const mimeType = new TextDecoder().decode(frameData.subarray(1, mimeEnd)) || 'image/jpeg';
+        
+        let imgStart = mimeEnd + 2;
+        // Skip description null-terminated string
+        const descEnd = findByte(frameData, 0x00, imgStart);
+        imgStart = descEnd + 1;
 
-    for (let i = 0; i < maxHeaderScan; i++) {
-      if (
-        (bytes[i] === 0x41 && bytes[i+1] === 0x50 && bytes[i+2] === 0x49 && bytes[i+3] === 0x43) || // 'APIC'
-        (bytes[i] === 0x50 && bytes[i+1] === 0x49 && bytes[i+2] === 0x43) // 'PIC'
-      ) {
-        apicIndex = i;
-        break;
+        const imgData = frameData.subarray(imgStart);
+        const blob = new Blob([imgData], { type: mimeType });
+        const coverUrl = URL.createObjectURL(blob);
+
+        coverCache.set(audioUrl, coverUrl);
+        return { coverUrl };
       }
-    }
-
-    // Fallback: If APIC tag is not found by ID, search directly for image magic bytes in the ID3 header!
-    let imgStart = -1;
-    let mimeType = 'image/jpeg';
-
-    const searchStart = apicIndex !== -1 ? apicIndex : 10;
-    const searchLimit = Math.min(bytes.length - 4, searchStart + 500000);
-
-    for (let i = searchStart; i < searchLimit; i++) {
-      // JPEG magic bytes: 0xFF, 0xD8, 0xFF
-      if (bytes[i] === 0xFF && bytes[i+1] === 0xD8 && bytes[i+2] === 0xFF) {
-        imgStart = i;
-        mimeType = 'image/jpeg';
-        break;
-      }
-      // PNG magic bytes: 0x89, 0x50, 0x4E, 0x47 ('\x89PNG')
-      if (bytes[i] === 0x89 && bytes[i+1] === 0x50 && bytes[i+2] === 0x4E && bytes[i+3] === 0x47) {
-        imgStart = i;
-        mimeType = 'image/png';
-        break;
-      }
-    }
-
-    if (imgStart !== -1) {
-      // Read frame length if APIC tag was found
-      let imgEnd = Math.min(bytes.length, imgStart + 500000);
-      if (apicIndex !== -1 && apicIndex + 8 < bytes.length) {
-        const frameLen = (bytes[apicIndex + 4] << 24) | (bytes[apicIndex + 5] << 16) | (bytes[apicIndex + 6] << 8) | bytes[apicIndex + 7];
-        if (frameLen > 0 && apicIndex + 10 + frameLen <= bytes.length) {
-          imgEnd = apicIndex + 10 + frameLen;
-        }
-      }
-
-      const imgBytes = bytes.subarray(imgStart, imgEnd);
-      const blob = new Blob([imgBytes], { type: mimeType });
-      const coverUrl = URL.createObjectURL(blob);
-
-      coverCache.set(audioUrl, coverUrl);
-      return { coverUrl };
     }
   } catch (e) {
-    console.warn('ID3 APIC extraction error for:', audioUrl, e);
+    // Return empty fallback on parse error
   }
 
   return {};
+}
+
+function findFrameIndex(bytes: Uint8Array, frameId: string): number {
+  const f0 = frameId.charCodeAt(0);
+  const f1 = frameId.charCodeAt(1);
+  const f2 = frameId.charCodeAt(2);
+  const f3 = frameId.charCodeAt(3);
+
+  for (let i = 0; i < bytes.length - 10; i++) {
+    if (bytes[i] === f0 && bytes[i + 1] === f1 && bytes[i + 2] === f2 && bytes[i + 3] === f3) {
+      return i;
+    }
+  }
+  return -1;
+}
+
+function findByte(bytes: Uint8Array, byteValue: number, start: number): number {
+  for (let i = start; i < bytes.length; i++) {
+    if (bytes[i] === byteValue) return i;
+  }
+  return bytes.length;
 }

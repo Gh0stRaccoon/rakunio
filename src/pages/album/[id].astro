@@ -4,17 +4,29 @@ import CanvasVisualizer from '../../components/CanvasVisualizer.astro';
 import LrcLyrics from '../../components/LrcLyrics.astro';
 import { ALBUMS } from '../../data/tracks';
 import type { Track } from '../../types/track';
+import { withBase } from '../../utils/base';
 
 export function getStaticPaths() {
   return ALBUMS.map((album) => ({
     params: { id: album.id },
-    props: { album }
+    props: { album, albumTracks: album.tracks }
   }));
 }
 
-const { album } = Astro.props;
-const albumTracks: Track[] = album.tracks;
-const defaultTrack: Track = albumTracks[0] || album.tracks[0];
+const { album, albumTracks } = Astro.props;
+
+const fallbackTrack: Track = {
+  id: 'fallback',
+  title: 'Sin título',
+  artist: 'Rakun.io',
+  album: 'rakunio',
+  albumId: 'rakunio',
+  duration: 150,
+  cover: withBase('/favicon.svg'),
+  audioUrl: ''
+};
+
+const defaultTrack: Track = albumTracks[0] || album.tracks[0] || fallbackTrack;
 
 const albumSchema = {
   '@context': 'https://schema.org',
@@ -355,9 +367,6 @@ const albumSchema = {
     const title = document.getElementById('main-track-title');
     const artist = document.getElementById('main-artist-name');
     const category = document.getElementById('main-category-badge');
-    const timeCurrent = document.getElementById('main-time-current');
-    const timeDuration = document.getElementById('main-time-duration');
-    const seekFill = document.getElementById('seek-fill');
     const seekBar = document.getElementById('seek-bar');
 
     playBtn?.addEventListener('click', () => {

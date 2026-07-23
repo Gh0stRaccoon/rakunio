@@ -22,17 +22,22 @@ export function parseLrc(lrcText: string): LrcLine[] {
       const lyricText = line.replace(timeRegex, '').trim();
 
       for (const match of matches) {
-        const minutes = parseInt(match[1], 10);
-        const seconds = parseInt(match[2], 10);
+        const minStr = match[1];
+        const secStr = match[2];
         const fractionStr = match[3];
-        const fraction = parseInt(fractionStr, 10);
-        const fractionDivisor = fractionStr.length === 3 ? 1000 : 100;
 
-        const timeInSeconds = minutes * 60 + seconds + fraction / fractionDivisor;
-        result.push({
-          time: timeInSeconds,
-          text: lyricText
-        });
+        if (minStr !== undefined && secStr !== undefined && fractionStr !== undefined) {
+          const minutes = parseInt(minStr, 10);
+          const seconds = parseInt(secStr, 10);
+          const fraction = parseInt(fractionStr, 10);
+          const fractionDivisor = fractionStr.length === 3 ? 1000 : 100;
+
+          const timeInSeconds = minutes * 60 + seconds + fraction / fractionDivisor;
+          result.push({
+            time: timeInSeconds,
+            text: lyricText
+          });
+        }
       }
     }
   }
@@ -45,7 +50,8 @@ export function getActiveLineIndex(lines: LrcLine[], currentTime: number): numbe
   if (!lines || lines.length === 0) return -1;
 
   for (let i = lines.length - 1; i >= 0; i--) {
-    if (currentTime >= lines[i].time) {
+    const line = lines[i];
+    if (line && currentTime >= line.time) {
       return i;
     }
   }

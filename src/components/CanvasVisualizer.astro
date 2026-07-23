@@ -2,64 +2,57 @@
 ---
 
 <div class="visualizer-container">
-  <canvas id="audio-visualizer-canvas"></canvas>
+  <canvas id="audio-visualizer-canvas" class="visualizer-canvas"></canvas>
 </div>
 
 <script>
   import { AudioEngine } from '../lib/audio/AudioEngine';
   import { $isPlaying } from '../lib/audio/PlayerStore';
 
+  let animationFrameId: number | null = null;
   let canvas: HTMLCanvasElement | null = null;
   let ctx: CanvasRenderingContext2D | null = null;
-  let container: HTMLElement | null = null;
-  let animationFrameId: number | null = null;
-  let frequencyData: Uint8Array = new Uint8Array(0);
 
-  // Pre-allocated height buffer for smooth, ultra-fast frame interpolation
   const NUM_BARS = 54;
-  let barHeights: Float32Array = new Float32Array(NUM_BARS);
+  const barHeights = new Float32Array(NUM_BARS).fill(6);
+  let frequencyData = new Uint8Array(256);
 
   function initCanvas() {
     canvas = document.getElementById('audio-visualizer-canvas') as HTMLCanvasElement;
-    container = canvas?.parentElement || null;
-    if (!canvas || !container) return;
+    if (!canvas) return;
 
     ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
     resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
 
-    const resizeObserver = new ResizeObserver(() => resizeCanvas());
-    resizeObserver.observe(container);
-
-    startAnimationLoop();
+    if (animationFrameId) {
+      cancelAnimationFrame(animationFrameId);
+    }
+    renderLoop();
   }
 
   function resizeCanvas() {
-    if (!canvas || !container || !ctx) return;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
     const dpr = window.devicePixelRatio || 1;
-    const rect = container.getBoundingClientRect();
-
+    
+    // Set actual render resolution matching device pixel ratio
     canvas.width = rect.width * dpr;
     canvas.height = rect.height * dpr;
-    ctx.scale(dpr, dpr);
-  }
 
-  function startAnimationLoop() {
-    if (animationFrameId !== null) {
-      cancelAnimationFrame(animationFrameId);
+    if (ctx) {
+      ctx.scale(dpr, dpr);
     }
-
-    const render = () => {
-      animationFrameId = requestAnimationFrame(render);
-      draw();
-    };
-
-    render();
   }
 
-  function draw() {
-    if (!canvas || !ctx || !container) return;
-    const width = container.clientWidth;
-    const height = container.clientHeight;
+  function renderLoop() {
+    animationFrameId = requestAnimationFrame(renderLoop);
+
+    if (!canvas || !ctx) return;
+    const width = canvas.width / (window.devicePixelRatio || 1);
+    const height = canvas.height / (window.devicePixelRatio || 1);
 
     ctx.clearRect(0, 0, width, height);
 
@@ -76,7 +69,7 @@
       frequencyData = new Uint8Array(bufferLength);
     }
 
-    analyser.getByteFrequencyData(frequencyData);
+    analyser.getByteFrequencyData(frequencyData as any);
     drawSpectrumBars(ctx, width, height, frequencyData);
   }
 
@@ -90,9 +83,11 @@
     ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
 
     for (let i = 0; i < numBars; i++) {
-      barHeights[i] += (6 - barHeights[i]) * 0.35;
+      const currentBarH = barHeights[i] ?? 6;
+      const nextBarH = currentBarH + (6 - currentBarH) * 0.35;
+      barHeights[i] = nextBarH;
       const x = i * (barWidth + gap);
-      const h = barHeights[i] + Math.sin(i * 0.3) * 2;
+      const h = nextBarH + Math.sin(i * 0.3) * 2;
       ctx.beginPath();
       ctx.roundRect(x, midY - h / 2, barWidth, h, 2);
       ctx.fill();
@@ -149,15 +144,16 @@
       const targetBarHeight = Math.max(6, logPercent * (height - 6));
 
       // Ultra-fast dual-speed lerp for instant kick drum bounce
-      const lerpSpeed = targetBarHeight > barHeights[i] ? 0.85 : 0.75;
-      barHeights[i] += (targetBarHeight - barHeights[i]) * lerpSpeed;
-      const currentHeight = barHeights[i];
+      const currentBarH = barHeights[i] ?? 6;
+      const lerpSpeed = targetBarHeight > currentBarH ? 0.85 : 0.75;
+      const nextBarH = currentBarH + (targetBarHeight - currentBarH) * lerpSpeed;
+      barHeights[i] = nextBarH;
 
       const x = i * (barWidth + gap);
-      const y = midY - currentHeight / 2;
+      const y = midY - nextBarH / 2;
 
       ctx.beginPath();
-      ctx.roundRect(x, y, barWidth, currentHeight, 2);
+      ctx.roundRect(x, y, barWidth, nextBarH, 2);
       ctx.fill();
     }
 
@@ -169,15 +165,16 @@
 
 <style>
   .visualizer-container {
+    position: relative;
     width: 100%;
-    height: 100%;
+    height: 60px;
     display: flex;
     align-items: center;
     justify-content: center;
   }
 
-  canvas {
-    width: 100%;
+  .visualizer-canvas {
+    width: 270px;
     height: 100%;
     display: block;
     mix-blend-mode: plus-lighter;

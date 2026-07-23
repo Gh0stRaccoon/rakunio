@@ -711,11 +711,11 @@ const defaultTrack: Track = TRACKS[0] || fallbackTrack;
     updatePlayIconUI(playing);
   });
 
-  $isShuffle.subscribe((isShuffle) => {
+  $isShuffle.subscribe((isShuffle: boolean) => {
     updateShuffleIconUI(isShuffle);
   });
 
-  $repeatMode.subscribe((mode) => {
+  $repeatMode.subscribe((mode: string) => {
     updateRepeatIconUI(mode);
   });
 

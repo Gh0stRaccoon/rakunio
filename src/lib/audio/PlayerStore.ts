@@ -5,10 +5,10 @@ import { TRACKS } from '../../data/tracks';
 export type VisualizerMode = 'bars' | 'waveform' | 'radial';
 export type RepeatMode = 'none' | 'all' | 'one';
 
-export const $currentTrack = atom<Track | null>(TRACKS[0]);
+export const $currentTrack = atom<Track | null>(TRACKS[0] || null);
 export const $isPlaying = atom<boolean>(false);
 export const $currentTime = atom<number>(0);
-export const $duration = atom<number>(TRACKS[0].duration);
+export const $duration = atom<number>(TRACKS[0]?.duration || 150);
 export const $volume = atom<number>(0.8);
 export const $isMuted = atom<boolean>(false);
 export const $queue = atom<Track[]>(TRACKS);
@@ -39,7 +39,9 @@ export function cycleRepeatMode() {
   const modes: RepeatMode[] = ['none', 'all', 'one'];
   const current = $repeatMode.get();
   const nextMode = modes[(modes.indexOf(current) + 1) % modes.length];
-  $repeatMode.set(nextMode);
+  if (nextMode) {
+    $repeatMode.set(nextMode);
+  }
 }
 
 export function playNext() {
@@ -49,7 +51,7 @@ export function playNext() {
 
   if ($isShuffle.get()) {
     if (queue.length === 1) {
-      playTrack(queue[0]);
+      if (queue[0]) playTrack(queue[0]);
       return;
     }
     const currentIndex = queue.findIndex(t => t.id === current.id);
@@ -57,13 +59,15 @@ export function playNext() {
     while (randomIndex === currentIndex && queue.length > 1) {
       randomIndex = Math.floor(Math.random() * queue.length);
     }
-    playTrack(queue[randomIndex]);
+    const target = queue[randomIndex];
+    if (target) playTrack(target);
     return;
   }
 
   const currentIndex = queue.findIndex(t => t.id === current.id);
   const nextIndex = (currentIndex + 1) % queue.length;
-  playTrack(queue[nextIndex]);
+  const target = queue[nextIndex];
+  if (target) playTrack(target);
 }
 
 export function playPrevious() {
@@ -73,7 +77,7 @@ export function playPrevious() {
 
   if ($isShuffle.get()) {
     if (queue.length === 1) {
-      playTrack(queue[0]);
+      if (queue[0]) playTrack(queue[0]);
       return;
     }
     const currentIndex = queue.findIndex(t => t.id === current.id);
@@ -81,13 +85,15 @@ export function playPrevious() {
     while (randomIndex === currentIndex && queue.length > 1) {
       randomIndex = Math.floor(Math.random() * queue.length);
     }
-    playTrack(queue[randomIndex]);
+    const target = queue[randomIndex];
+    if (target) playTrack(target);
     return;
   }
 
   const currentIndex = queue.findIndex(t => t.id === current.id);
   const prevIndex = (currentIndex - 1 + queue.length) % queue.length;
-  playTrack(queue[prevIndex]);
+  const target = queue[prevIndex];
+  if (target) playTrack(target);
 }
 
 export function setVolume(vol: number) {
@@ -106,5 +112,7 @@ export function cycleVisualizerMode() {
   const modes: VisualizerMode[] = ['bars', 'waveform', 'radial'];
   const current = $visualizerMode.get();
   const nextMode = modes[(modes.indexOf(current) + 1) % modes.length];
-  $visualizerMode.set(nextMode);
+  if (nextMode) {
+    $visualizerMode.set(nextMode);
+  }
 }
