@@ -1,0 +1,248 @@
+---
+interface Props {
+  lrcContent?: string;
+  trackId?: string;
+}
+
+const { lrcContent, trackId } = Astro.props;
+---
+
+<div class="lyrics-view-container" data-lrc-content={lrcContent || ''} data-lrc-track-id={trackId || ''}>
+  <div class="lyrics-header">
+    <span class="lyrics-label">LETRA EN VIVO</span>
+  </div>
+
+  <div class="lyrics-scroll-viewport" id="lrc-viewport">
+    <div class="lyrics-lines-list" id="lrc-list">
+      <p class="lrc-empty">Selecciona un tema para ver sus letras...</p>
+    </div>
+  </div>
+</div>
+
+<script>
+  import { parseLrc, getActiveLineIndex, type LrcLine } from '../lib/lrc/LrcParser';
+  import { $currentTrack, $currentTime } from '../lib/audio/PlayerStore';
+  import { AudioEngine } from '../lib/audio/AudioEngine';
+
+  let currentLrcLines: LrcLine[] = [];
+  let activeIndex = -1;
+  let lists: NodeListOf<HTMLElement> | null = null;
+
+  function initLrc() {
+    lists = document.querySelectorAll('.lyrics-lines-list');
+
+    const staticContainer = document.querySelector('.lyrics-view-container[data-lrc-content]') as HTMLElement;
+    const staticLrc = staticContainer?.getAttribute('data-lrc-content');
+
+    if (staticLrc && staticLrc.trim().length > 0) {
+      currentLrcLines = parseLrc(staticLrc);
+      renderLrcLines();
+    } else {
+      updateLrcFromStore($currentTrack.get());
+    }
+
+    $currentTrack.subscribe((track) => {
+      const isStatic = staticContainer?.getAttribute('data-lrc-content');
+      if (!isStatic || isStatic.trim().length === 0) {
+        updateLrcFromStore(track);
+      }
+    });
+
+    $currentTime.subscribe((time) => {
+      if (currentLrcLines.length === 0) return;
+
+      const trackId = staticContainer?.getAttribute('data-lrc-track-id');
+      const currentTrack = $currentTrack.get();
+
+      // Only scroll highlight if this track is the currently playing track
+      if (!trackId || (currentTrack && currentTrack.id === trackId)) {
+        const newIndex = getActiveLineIndex(currentLrcLines, time);
+        if (newIndex !== activeIndex) {
+          activeIndex = newIndex;
+          updateActiveLineHighlight();
+        }
+      }
+    });
+
+    window.addEventListener('realign-lrc', () => {
+      updateActiveLineHighlight();
+    });
+  }
+
+  function updateLrcFromStore(track: any) {
+    if (track && track.lrcContent) {
+      currentLrcLines = parseLrc(track.lrcContent);
+      renderLrcLines();
+    } else {
+      currentLrcLines = [];
+      lists?.forEach(list => {
+        list.innerHTML = `<div class="lrc-no-lyrics">
+          <p>Tema instrumental o sin letra sincronizada LRC.</p>
+        </div>`;
+      });
+    }
+  }
+
+  function renderLrcLines() {
+    if (!lists) return;
+    if (currentLrcLines.length === 0) {
+      lists.forEach(list => {
+        list.innerHTML = `<p class="lrc-empty">Letra sin formato sincronizado.</p>`;
+      });
+      return;
+    }
+
+    const html = currentLrcLines.map((line, idx) => `
+      <div class="lrc-line ${idx === activeIndex ? 'active' : ''}" data-index="${idx}" data-time="${line.time}">
+        <span class="lrc-bullet">•</span>
+        <span class="lrc-text">${line.text || '♪ ♪ ♪'}</span>
+      </div>
+    `).join('');
+
+    lists.forEach(list => {
+      list.innerHTML = html;
+      const lineElems = list.querySelectorAll('.lrc-line');
+      lineElems.forEach((elem) => {
+        elem.addEventListener('click', () => {
+          const time = parseFloat(elem.getAttribute('data-time') || '0');
+          AudioEngine.seek(time);
+        });
+      });
+    });
+
+    setTimeout(() => updateActiveLineHighlight(), 60);
+  }
+
+  function updateActiveLineHighlight() {
+    if (!lists) return;
+
+    lists.forEach((list) => {
+      const viewport = list.closest('.lyrics-scroll-viewport') as HTMLElement;
+      if (!viewport || viewport.clientHeight === 0) return;
+
+      const lines = list.querySelectorAll('.lrc-line');
+      lines.forEach((line, idx) => {
+        if (idx === activeIndex) {
+          line.classList.add('active');
+          const activeElem = line as HTMLElement;
+
+          const viewportRect = viewport.getBoundingClientRect();
+          const activeRect = activeElem.getBoundingClientRect();
+
+          const lineRelativeTop = activeRect.top - viewportRect.top + viewport.scrollTop;
+          const targetScroll = lineRelativeTop + (activeElem.clientHeight / 2) - (viewport.clientHeight / 2);
+
+          viewport.scrollTo({
+            top: Math.max(0, targetScroll),
+            behavior: 'smooth'
+          });
+        } else {
+          line.classList.remove('active');
+        }
+      });
+    });
+  }
+
+  document.addEventListener('astro:page-load', () => initLrc());
+</script>
+
+<style>
+  .lyrics-view-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    height: 100%;
+    max-height: 380px;
+    width: 100%;
+  }
+
+  .lyrics-header {
+    margin-bottom: 2px;
+  }
+
+  .lyrics-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+  }
+
+  .lyrics-scroll-viewport {
+    position: relative;
+    flex: 1;
+    overflow-y: auto;
+    height: 320px;
+    max-height: 320px;
+    padding-right: 8px;
+    scroll-behavior: smooth;
+    mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
+  }
+
+  .lyrics-lines-list {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 120px 0;
+  }
+
+  :global(.lrc-line) {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+    color: #8c8075;
+    font-size: 0.95rem;
+    font-weight: 400;
+    line-height: 1.4;
+    padding: 4px 0;
+  }
+
+  :global(.lrc-bullet) {
+    opacity: 0;
+    color: var(--accent-warm);
+    font-size: 1.2rem;
+    line-height: 1;
+    transition: var(--transition-smooth);
+  }
+
+  :global(.lrc-line:hover) {
+    color: var(--text-main);
+  }
+
+  :global(.lrc-line.active) {
+    color: var(--accent-warm);
+    font-size: 1.1rem;
+    font-weight: 700;
+  }
+
+  :global(.lrc-line.active .lrc-bullet) {
+    opacity: 1;
+  }
+
+  :global(.lrc-no-lyrics), :global(.lrc-empty) {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    padding: 20px 0;
+  }
+
+  /* Overlay theme overrides for mobile lyrics overlay */
+  :global(.mobile-lyrics-overlay .lyrics-header) {
+    display: none;
+  }
+
+  :global(.mobile-lyrics-overlay .lrc-line) {
+    color: rgba(255, 255, 255, 0.55);
+  }
+
+  :global(.mobile-lyrics-overlay .lrc-line:hover) {
+    color: white;
+  }
+
+  :global(.mobile-lyrics-overlay .lrc-line.active) {
+    color: var(--accent-warm);
+  }
+</style>

@@ -1,0 +1,185 @@
+---
+---
+
+<div class="visualizer-container">
+  <canvas id="audio-visualizer-canvas"></canvas>
+</div>
+
+<script>
+  import { AudioEngine } from '../lib/audio/AudioEngine';
+  import { $isPlaying } from '../lib/audio/PlayerStore';
+
+  let canvas: HTMLCanvasElement | null = null;
+  let ctx: CanvasRenderingContext2D | null = null;
+  let container: HTMLElement | null = null;
+  let animationFrameId: number | null = null;
+  let frequencyData: Uint8Array = new Uint8Array(0);
+
+  // Pre-allocated height buffer for smooth, ultra-fast frame interpolation
+  const NUM_BARS = 54;
+  let barHeights: Float32Array = new Float32Array(NUM_BARS);
+
+  function initCanvas() {
+    canvas = document.getElementById('audio-visualizer-canvas') as HTMLCanvasElement;
+    container = canvas?.parentElement || null;
+    if (!canvas || !container) return;
+
+    ctx = canvas.getContext('2d');
+    resizeCanvas();
+
+    const resizeObserver = new ResizeObserver(() => resizeCanvas());
+    resizeObserver.observe(container);
+
+    startAnimationLoop();
+  }
+
+  function resizeCanvas() {
+    if (!canvas || !container || !ctx) return;
+    const dpr = window.devicePixelRatio || 1;
+    const rect = container.getBoundingClientRect();
+
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    ctx.scale(dpr, dpr);
+  }
+
+  function startAnimationLoop() {
+    if (animationFrameId !== null) {
+      cancelAnimationFrame(animationFrameId);
+    }
+
+    const render = () => {
+      animationFrameId = requestAnimationFrame(render);
+      draw();
+    };
+
+    render();
+  }
+
+  function draw() {
+    if (!canvas || !ctx || !container) return;
+    const width = container.clientWidth;
+    const height = container.clientHeight;
+
+    ctx.clearRect(0, 0, width, height);
+
+    const analyser = AudioEngine.getAnalyser();
+    const isPlaying = $isPlaying.get();
+
+    if (!analyser || !isPlaying) {
+      drawIdleState(ctx, width, height);
+      return;
+    }
+
+    const bufferLength = analyser.frequencyBinCount;
+    if (frequencyData.length !== bufferLength) {
+      frequencyData = new Uint8Array(bufferLength);
+    }
+
+    analyser.getByteFrequencyData(frequencyData);
+    drawSpectrumBars(ctx, width, height, frequencyData);
+  }
+
+  function drawIdleState(ctx: CanvasRenderingContext2D, width: number, height: number) {
+    const numBars = NUM_BARS;
+    const barWidth = 4;
+    const gap = (width - numBars * barWidth) / (numBars - 1);
+    const midY = height / 2;
+
+    ctx.save();
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
+
+    for (let i = 0; i < numBars; i++) {
+      barHeights[i] += (6 - barHeights[i]) * 0.35;
+      const x = i * (barWidth + gap);
+      const h = barHeights[i] + Math.sin(i * 0.3) * 2;
+      ctx.beginPath();
+      ctx.roundRect(x, midY - h / 2, barWidth, h, 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  function drawSpectrumBars(ctx: CanvasRenderingContext2D, width: number, height: number, data: Uint8Array) {
+    const numBars = NUM_BARS;
+    const barWidth = 4;
+    const gap = (width - numBars * barWidth) / (numBars - 1);
+    const minSampleIndex = 2; // Skip static DC sub-rumble (<40Hz)
+    const maxIndex = Math.floor(data.length * 0.75);
+    const midY = height / 2;
+
+    const LOG_COMPRESSION_K = 3.5;
+    const LOG_DENOMINATOR = Math.log10(1 + LOG_COMPRESSION_K);
+
+    // Radiant glowing gradient for bars over cover art
+    const gradient = ctx.createLinearGradient(0, 0, width, 0);
+    gradient.addColorStop(0, '#ffffff');
+    gradient.addColorStop(0.35, '#ffcca7');
+    gradient.addColorStop(0.7, '#f4efe8');
+    gradient.addColorStop(1, '#ffffff');
+
+    ctx.save();
+    ctx.fillStyle = gradient;
+    ctx.shadowColor = 'rgba(255, 204, 167, 0.7)';
+    ctx.shadowBlur = 10;
+
+    for (let i = 0; i < numBars; i++) {
+      const normalizedPos = i / numBars; // 0.0 (bass) to 1.0 (treble)
+
+      // Frequency Logarithmic Mapping across spectrum
+      const sampleIndex = minSampleIndex + Math.floor(Math.pow(normalizedPos, 1.15) * (maxIndex - minSampleIndex));
+      const rawValue = data[sampleIndex] || 0;
+
+      let normalizedRaw = rawValue / 255;
+
+      // Dynamic Bass Kick Response Tuning
+      if (normalizedPos < 0.28) {
+        const bassEq = 0.52 + normalizedPos * 0.8;
+        normalizedRaw = Math.pow(Math.min(1.0, normalizedRaw * bassEq), 1.35);
+      } else {
+        const eqFactor = 0.70 + ((normalizedPos - 0.28) * 0.75);
+        normalizedRaw = Math.min(1.0, normalizedRaw * eqFactor);
+      }
+
+      // Logarithmic / dB Reaction Curve
+      const logPercent = normalizedRaw > 0 
+        ? Math.log10(1 + LOG_COMPRESSION_K * normalizedRaw) / LOG_DENOMINATOR 
+        : 0;
+
+      const targetBarHeight = Math.max(6, logPercent * (height - 6));
+
+      // Ultra-fast dual-speed lerp for instant kick drum bounce
+      const lerpSpeed = targetBarHeight > barHeights[i] ? 0.85 : 0.75;
+      barHeights[i] += (targetBarHeight - barHeights[i]) * lerpSpeed;
+      const currentHeight = barHeights[i];
+
+      const x = i * (barWidth + gap);
+      const y = midY - currentHeight / 2;
+
+      ctx.beginPath();
+      ctx.roundRect(x, y, barWidth, currentHeight, 2);
+      ctx.fill();
+    }
+
+    ctx.restore();
+  }
+
+  document.addEventListener('astro:page-load', () => initCanvas());
+</script>
+
+<style>
+  .visualizer-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+    mix-blend-mode: plus-lighter;
+  }
+</style>
