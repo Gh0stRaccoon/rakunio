@@ -1,10 +1,16 @@
-# Lofi — Focus & Chill Beats
+# Lofi Beats — Enfoque, Calma & Paisajes Psicodélicos
 
-Una colección inmersiva de ritmos **Lofi Hip Hop**, pasajes **ambientales** y **texturas psicodélicas**, diseñada minuciosamente para acompañarte en tus sesiones de programación, estudio y momentos de profunda concentración.
+**Lofi Beats** es una colección sonora diseñada para acompañar tus sesiones de código, estudio, lectura y momentos de profunda concentración.
 
-## El Concepto
-Esta carpeta reúne composiciones que fusionan sintetizadores cálidos, vinilo crujiente y ritmos de batería suaves. Desde pistas ideales para mantener el *flow state* mientras escribes código, hasta fragmentos con matices psicodélicos que expanden la mente y estimulan la creatividad.
+---
 
-## Recomendación de Escucha
-- **Para Programar & Trabajar**: Activa el modo aleatorio y déjalo sonar en segundo plano.
-- **Para Desconectar**: Utiliza audífonos para apreciar las capas estéreo y los efectos espaciales.
+## 🎧 La Experiencia Auditiva
+Una fusión entre la calidez del sonido analógico de vinilo y texturas digitales contemporáneas:
+- **Code & Chill / Focus Beats**: Ritmos constantes y suaves pensados para entrar en estado de flujo (*Code & Chill, Easy Breeze Vibes, Code & Coffee Dreams*).
+- **Matices Psicodélicos & Frecuencias Espectrales**: Paisajes sonoros con sintetizadores envolventes, ecos y capas hipnóticas (*Ghost Frequencies, Spectral Circuits, Phantom in the Algorithm*).
+- **Atmósferas Nocturnas**: Sonidos ambientales y graves profundos para trabajar cuando el mundo duerme (*Ritmo en las Sombras, Sombras Cambiantes*).
+
+---
+
+## 🧘 Producido para Acompañarte
+Ideal para mantener como música de fondo mientras programas, diseñas o relajas la mente al final del día.

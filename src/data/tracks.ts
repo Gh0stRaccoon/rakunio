@@ -75,11 +75,11 @@ function slugify(text: string): string {
 }
 
 function scanMusicGlob(): { tracks: Track[]; albums: Album[] } {
-  // Vite's eager glob scanner dynamically discovers all MP3, LRC, images & MD files inside /public/music/
+  // Vite's eager glob scanner dynamically discovers all MP3, LRC, MD, and image files inside /public/music/
   const mp3Modules = import.meta.glob('/public/music/**/*.mp3', { query: '?url', import: 'default', eager: true }) as Record<string, string>;
   const lrcModules = import.meta.glob('/public/music/**/*.lrc', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
+  const mdModules = import.meta.glob('/public/music/**/*.md', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
   const imgModules = import.meta.glob('/public/music/**/*.{jpeg,jpg,png,webp}', { query: '?url', import: 'default', eager: true }) as Record<string, string>;
-  const mdModules = import.meta.glob('/public/music/**/*.{md,markdown}', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
 
   const tracks: Track[] = [];
   const albumsMap = new Map<string, Album>();
@@ -105,6 +105,27 @@ function scanMusicGlob(): { tracks: Track[]; albums: Album[] } {
     const lrcPath = rawPath.replace(/\.mp3$/i, '.lrc');
     const lrcContent = lrcModules[lrcPath] || undefined;
 
+    // Discover custom album cover image in folder
+    let albumCover = withBase('/favicon.svg');
+    for (const imgPath in imgModules) {
+      if (imgPath.includes(`/public/music/${folder}/`)) {
+        const cleanImgUrl = imgModules[imgPath]?.startsWith('/') ? imgModules[imgPath] : `/${imgModules[imgPath]}`;
+        if (cleanImgUrl) {
+          albumCover = withBase(cleanImgUrl.replace(/^\/(rakunio\/)+/, '/'));
+          break;
+        }
+      }
+    }
+
+    // Discover custom album markdown info
+    let markdownInfo: string | undefined = undefined;
+    for (const mdPath in mdModules) {
+      if (mdPath.includes(`/public/music/${folder}/`)) {
+        markdownInfo = mdModules[mdPath];
+        break;
+      }
+    }
+
     // Clean audio URL path
     const cleanPath = rawUrl.startsWith('/') ? rawUrl : `/${rawUrl}`;
     const audioUrl = withBase(cleanPath.replace(/^\/(rakunio\/)+/, '/'));
@@ -112,31 +133,13 @@ function scanMusicGlob(): { tracks: Track[]; albums: Album[] } {
     // Attach external streaming links if available or fallback to artist profiles
     const externalLinks: ExternalLinks = TRACK_PLATFORM_LINKS[trackId] || { ...ARTIST_PROFILES };
 
-    // Discover album cover image inside folder (e.g. album_portrait.jpeg)
-    let albumCoverUrl = withBase('/favicon.svg');
-    for (const imgPath in imgModules) {
-      if (imgPath.includes(`/music/${folder}/`)) {
-        albumCoverUrl = withBase(imgModules[imgPath] || '/favicon.svg');
-        break;
-      }
-    }
-
-    // Discover album markdown info content inside folder (e.g. info.md)
-    let albumMdContent = '';
-    for (const mdPath in mdModules) {
-      if (mdPath.includes(`/music/${folder}/`)) {
-        albumMdContent = mdModules[mdPath] || '';
-        break;
-      }
-    }
-
     const trackObj: Track = {
       id: trackId,
       title: titleWithoutExt,
       artist: artistName,
       album: albumTitle,
       albumId,
-      cover: albumCoverUrl,
+      cover: albumCover,
       audioUrl,
       duration: 150,
       externalLinks,
@@ -146,17 +149,14 @@ function scanMusicGlob(): { tracks: Track[]; albums: Album[] } {
     tracks.push(trackObj);
 
     if (!albumsMap.has(albumId)) {
-      const fallbackDesc = folder === 'lofi'
-        ? 'Una colección de ritmos lofi hip hop y texturas psicodélicas diseñadas para acompañarte mientras trabajas, estudias y te relajas.'
-        : 'Canciones oficiales del artista virtual Rakun.io. Experimentos sonoros sin barreras que abarcan desde el K-Pop y Reggaetón hasta baladas emotivas.';
-
       albumsMap.set(albumId, {
         id: albumId,
         title: albumTitle,
         artist: artistName,
-        cover: albumCoverUrl,
+        cover: albumCover,
         year: 2026,
-        description: albumMdContent || fallbackDesc,
+        description: `Carpeta ${albumTitle}`,
+        markdownInfo,
         tracks: [],
         externalLinks: { ...ARTIST_PROFILES }
       });
@@ -165,9 +165,6 @@ function scanMusicGlob(): { tracks: Track[]; albums: Album[] } {
     const albumObj = albumsMap.get(albumId);
     if (albumObj) {
       albumObj.tracks.push(trackObj);
-      if (albumObj.cover === withBase('/favicon.svg') && albumCoverUrl !== withBase('/favicon.svg')) {
-        albumObj.cover = albumCoverUrl;
-      }
     }
   }
 

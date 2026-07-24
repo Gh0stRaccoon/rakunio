@@ -27,6 +27,7 @@ export interface Album {
   cover: string;
   year: number;
   description: string;
+  markdownInfo?: string | undefined;
   tracks: Track[];
   externalLinks?: ExternalLinks | undefined;
 }
