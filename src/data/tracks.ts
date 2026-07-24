@@ -75,11 +75,11 @@ function slugify(text: string): string {
 }
 
 function scanMusicGlob(): { tracks: Track[]; albums: Album[] } {
-  // Vite's eager glob scanner dynamically discovers all MP3, LRC, image, & MD files inside /public/music/
+  // Vite's eager glob scanner dynamically discovers all MP3, LRC, images & MD files inside /public/music/
   const mp3Modules = import.meta.glob('/public/music/**/*.mp3', { query: '?url', import: 'default', eager: true }) as Record<string, string>;
   const lrcModules = import.meta.glob('/public/music/**/*.lrc', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
-  const imageModules = import.meta.glob('/public/music/**/*.{jpg,jpeg,png,webp,svg}', { query: '?url', import: 'default', eager: true }) as Record<string, string>;
-  const mdModules = import.meta.glob('/public/music/**/*.md', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
+  const imgModules = import.meta.glob('/public/music/**/*.{jpeg,jpg,png,webp}', { query: '?url', import: 'default', eager: true }) as Record<string, string>;
+  const mdModules = import.meta.glob('/public/music/**/*.{md,markdown}', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
 
   const tracks: Track[] = [];
   const albumsMap = new Map<string, Album>();
@@ -101,31 +101,6 @@ function scanMusicGlob(): { tracks: Track[]; albums: Album[] } {
     const albumTitle = folder;
     const artistName = folder === 'rakunio' ? 'Rakun.io' : 'Lofi Producer';
 
-    // Find folder cover image if available (e.g., /public/music/rakunio/cover.jpg or cover.png)
-    const folderPath = parts.join('/');
-    let folderCover = withBase('/favicon.svg');
-    for (const imgPath in imageModules) {
-      if (imgPath.startsWith(folderPath + '/')) {
-        const imgUrl = imageModules[imgPath];
-        if (imgUrl) {
-          folderCover = withBase(imgUrl.replace(/^\/(rakunio\/)+/, '/'));
-          break;
-        }
-      }
-    }
-
-    // Find folder description MD file if available (e.g., README.md or info.md)
-    let folderDescription = `Carpeta ${albumTitle}`;
-    for (const mdPath in mdModules) {
-      if (mdPath.startsWith(folderPath + '/')) {
-        const mdText = mdModules[mdPath];
-        if (mdText) {
-          folderDescription = mdText.trim();
-          break;
-        }
-      }
-    }
-
     // Find matching LRC content
     const lrcPath = rawPath.replace(/\.mp3$/i, '.lrc');
     const lrcContent = lrcModules[lrcPath] || undefined;
@@ -137,13 +112,31 @@ function scanMusicGlob(): { tracks: Track[]; albums: Album[] } {
     // Attach external streaming links if available or fallback to artist profiles
     const externalLinks: ExternalLinks = TRACK_PLATFORM_LINKS[trackId] || { ...ARTIST_PROFILES };
 
+    // Discover album cover image inside folder (e.g. album_portrait.jpeg)
+    let albumCoverUrl = withBase('/favicon.svg');
+    for (const imgPath in imgModules) {
+      if (imgPath.includes(`/music/${folder}/`)) {
+        albumCoverUrl = withBase(imgModules[imgPath] || '/favicon.svg');
+        break;
+      }
+    }
+
+    // Discover album markdown info content inside folder (e.g. info.md)
+    let albumMdContent = '';
+    for (const mdPath in mdModules) {
+      if (mdPath.includes(`/music/${folder}/`)) {
+        albumMdContent = mdModules[mdPath] || '';
+        break;
+      }
+    }
+
     const trackObj: Track = {
       id: trackId,
       title: titleWithoutExt,
       artist: artistName,
       album: albumTitle,
       albumId,
-      cover: folderCover,
+      cover: albumCoverUrl,
       audioUrl,
       duration: 150,
       externalLinks,
@@ -153,13 +146,17 @@ function scanMusicGlob(): { tracks: Track[]; albums: Album[] } {
     tracks.push(trackObj);
 
     if (!albumsMap.has(albumId)) {
+      const fallbackDesc = folder === 'lofi'
+        ? 'Una colección de ritmos lofi hip hop y texturas psicodélicas diseñadas para acompañarte mientras trabajas, estudias y te relajas.'
+        : 'Canciones oficiales del artista virtual Rakun.io. Experimentos sonoros sin barreras que abarcan desde el K-Pop y Reggaetón hasta baladas emotivas.';
+
       albumsMap.set(albumId, {
         id: albumId,
         title: albumTitle,
         artist: artistName,
-        cover: folderCover,
+        cover: albumCoverUrl,
         year: 2026,
-        description: folderDescription,
+        description: albumMdContent || fallbackDesc,
         tracks: [],
         externalLinks: { ...ARTIST_PROFILES }
       });
@@ -168,6 +165,9 @@ function scanMusicGlob(): { tracks: Track[]; albums: Album[] } {
     const albumObj = albumsMap.get(albumId);
     if (albumObj) {
       albumObj.tracks.push(trackObj);
+      if (albumObj.cover === withBase('/favicon.svg') && albumCoverUrl !== withBase('/favicon.svg')) {
+        albumObj.cover = albumCoverUrl;
+      }
     }
   }
 
