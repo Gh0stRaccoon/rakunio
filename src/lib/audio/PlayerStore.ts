@@ -23,6 +23,14 @@ export function setQueue(tracks: Track[]) {
 }
 
 export function playTrack(track: Track, autoPlay: boolean = true) {
+  const current = $currentTrack.get();
+  if (current?.id === track.id) {
+    if (autoPlay && !$isPlaying.get()) {
+      $isPlaying.set(true);
+    }
+    return;
+  }
+
   $currentTrack.set(track);
   $isPlaying.set(autoPlay);
 }

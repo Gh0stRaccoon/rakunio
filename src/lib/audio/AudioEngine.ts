@@ -17,6 +17,8 @@ class AudioEngineSingleton {
   private analyser: AnalyserNode | null = null;
   private sourceNode: MediaElementAudioSourceNode | null = null;
   private isInitialized = false;
+  private playPromise: Promise<void> | null = null;
+  private isChangingTrack = false;
 
   public init() {
     if (typeof window === 'undefined' || this.isInitialized) return;
@@ -32,11 +34,17 @@ class AudioEngineSingleton {
 
     // Native audio state sync listeners
     this.audio.addEventListener('play', () => {
-      if (!$isPlaying.get()) $isPlaying.set(true);
+      if (!$isPlaying.get()) {
+        $isPlaying.set(true);
+      }
     });
 
     this.audio.addEventListener('pause', () => {
-      if ($isPlaying.get()) $isPlaying.set(false);
+      // Do not sync $isPlaying during track change or when play promise is active
+      if (this.isChangingTrack || this.playPromise !== null) return;
+      if ($isPlaying.get()) {
+        $isPlaying.set(false);
+      }
     });
 
     this.audio.addEventListener('timeupdate', () => {
@@ -70,12 +78,16 @@ class AudioEngineSingleton {
 
         // Only load if URL actually changed
         if (this.audio.src !== fullAudioUrl) {
+          this.isChangingTrack = true;
           const wasPlaying = $isPlaying.get();
           this.audio.src = track.audioUrl;
-          
+          this.audio.currentTime = 0;
+          $currentTime.set(0);
+
           if (wasPlaying) {
-            this.play();
+            await this.play();
           }
+          this.isChangingTrack = false;
         }
 
         // Dynamically extract ID3 cover art
@@ -97,14 +109,14 @@ class AudioEngineSingleton {
     });
 
     // Subscribe to Nanostores play state changes
-    $isPlaying.subscribe((playing) => {
+    $isPlaying.subscribe(async (playing) => {
       if (!this.audio) return;
       if (playing) {
         if (this.audio.paused) {
-          this.play();
+          await this.play();
         }
       } else {
-        this.pause();
+        await this.pause();
       }
     });
 
@@ -160,19 +172,40 @@ class AudioEngineSingleton {
     }
 
     try {
-      await this.audio.play();
-      if (!$isPlaying.get()) $isPlaying.set(true);
-    } catch (e) {
-      console.warn('Audio play prevented by browser policy:', e);
-      $isPlaying.set(false);
+      if (this.playPromise) {
+        await this.playPromise;
+        if (!this.audio.paused) return;
+      }
+
+      this.playPromise = this.audio.play();
+      await this.playPromise;
+    } catch (e: any) {
+      if (e?.name !== 'AbortError') {
+        console.warn('Audio play prevented by browser policy:', e);
+        if ($isPlaying.get()) {
+          $isPlaying.set(false);
+        }
+      }
+    } finally {
+      this.playPromise = null;
     }
   }
 
-  public pause() {
-    if (this.audio && !this.audio.paused) {
+  public async pause() {
+    if (!this.audio) return;
+
+    if (this.playPromise) {
+      try {
+        await this.playPromise;
+      } catch (e) {
+        // Ignore play promise abort errors
+      }
+      this.playPromise = null;
+    }
+
+    if (!this.audio.paused) {
       this.audio.pause();
     }
-    if ($isPlaying.get()) $isPlaying.set(false);
   }
 
   public seek(seconds: number) {
