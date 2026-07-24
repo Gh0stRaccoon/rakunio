@@ -491,23 +491,28 @@ const albumSchema = {
     updateRepeatIconUI($repeatMode.get());
 
     const cur = $currentTrack.get();
+    const workspace = document.querySelector('.player-main-workspace');
     if (cur) {
       const rawContainer = document.getElementById('album-raw-tracks');
       const albumTracks = rawContainer ? JSON.parse(rawContainer.getAttribute('data-tracks') || '[]') : [];
       const isCurInAlbum = albumTracks.some((t: any) => t.id === cur.id);
 
       if (isCurInAlbum) {
+        workspace?.classList.remove('mode-album-header');
+        workspace?.classList.add('mode-player-active');
         if (title) title.textContent = cur.title;
         if (artist) artist.textContent = cur.artist;
         if (category) category.textContent = cur.album.toUpperCase();
         update5CardCarouselStage(cur);
         highlightActivePlaylistItem(cur.id);
       } else {
+        workspace?.classList.add('mode-album-header');
+        workspace?.classList.remove('mode-player-active');
         const firstTrack = albumTracks[0];
         if (firstTrack) {
-          if (title) title.textContent = firstTrack.title;
-          if (artist) artist.textContent = firstTrack.artist;
-          if (category) category.textContent = firstTrack.album.toUpperCase();
+          if (title) title.textContent = firstTrack.album.toUpperCase();
+          if (artist) artist.textContent = `${albumTracks.length} canciones`;
+          if (category) category.textContent = 'CARPETA DE BEATS';
           update5CardCarouselStage(firstTrack);
         }
         highlightActivePlaylistItem('');
@@ -521,11 +526,14 @@ const albumSchema = {
       const title = document.getElementById('main-track-title');
       const artist = document.getElementById('main-artist-name');
       const category = document.getElementById('main-category-badge');
+      const workspace = document.querySelector('.player-main-workspace');
       const rawContainer = document.getElementById('album-raw-tracks');
       const albumTracks = rawContainer ? JSON.parse(rawContainer.getAttribute('data-tracks') || '[]') : [];
       const isTrackInAlbum = albumTracks.some((t: any) => t.id === track.id);
 
       if (isTrackInAlbum) {
+        workspace?.classList.remove('mode-album-header');
+        workspace?.classList.add('mode-player-active');
         if (title) title.textContent = track.title;
         if (artist) artist.textContent = track.artist;
         if (category) category.textContent = track.album.toUpperCase();
@@ -533,11 +541,13 @@ const albumSchema = {
         update5CardCarouselStage(track);
         highlightActivePlaylistItem(track.id);
       } else {
+        workspace?.classList.add('mode-album-header');
+        workspace?.classList.remove('mode-player-active');
         const firstTrack = albumTracks[0];
         if (firstTrack) {
-          if (title) title.textContent = firstTrack.title;
-          if (artist) artist.textContent = firstTrack.artist;
-          if (category) category.textContent = firstTrack.album.toUpperCase();
+          if (title) title.textContent = firstTrack.album.toUpperCase();
+          if (artist) artist.textContent = `${albumTracks.length} canciones`;
+          if (category) category.textContent = 'CARPETA DE BEATS';
           update5CardCarouselStage(firstTrack);
         }
         highlightActivePlaylistItem('');
@@ -707,6 +717,27 @@ const albumSchema = {
     border-radius: var(--radius-lg);
     background: var(--bg-card);
     position: relative;
+  }
+
+  /* Album Header Mode: Pure album presentation when active audio belongs to a different folder */
+  .player-main-workspace.mode-album-header .progress-section,
+  .player-main-workspace.mode-album-header .volume-row,
+  .player-main-workspace.mode-album-header .lyrics-wrapper-desktop,
+  .player-main-workspace.mode-album-header .mobile-lyrics-toggle-btn,
+  .player-main-workspace.mode-album-header .cover-visualizer-overlay,
+  .player-main-workspace.mode-album-header .cover-card[data-pos="1"],
+  .player-main-workspace.mode-album-header .cover-card[data-pos="-1"],
+  .player-main-workspace.mode-album-header .cover-card[data-pos="2"],
+  .player-main-workspace.mode-album-header .cover-card[data-pos="-2"],
+  .player-main-workspace.mode-album-header #btn-shuffle,
+  .player-main-workspace.mode-album-header #btn-repeat,
+  .player-main-workspace.mode-album-header #btn-prev-main,
+  .player-main-workspace.mode-album-header #btn-next-main {
+    display: none !important;
+  }
+
+  .player-main-workspace.mode-album-header .controls-row {
+    justify-content: center;
   }
 
   .player-top-row {

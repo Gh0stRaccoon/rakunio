@@ -75,9 +75,10 @@ function slugify(text: string): string {
 }
 
 function scanMusicGlob(): { tracks: Track[]; albums: Album[] } {
-  // Vite's eager glob scanner dynamically discovers all MP3 & LRC files inside /public/music/
+  // Vite's eager glob scanner dynamically discovers all MP3, LRC, & cover image files inside /public/music/
   const mp3Modules = import.meta.glob('/public/music/**/*.mp3', { query: '?url', import: 'default', eager: true }) as Record<string, string>;
   const lrcModules = import.meta.glob('/public/music/**/*.lrc', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
+  const imageModules = import.meta.glob('/public/music/**/*.{jpg,jpeg,png,webp,svg}', { query: '?url', import: 'default', eager: true }) as Record<string, string>;
 
   const tracks: Track[] = [];
   const albumsMap = new Map<string, Album>();
@@ -99,6 +100,19 @@ function scanMusicGlob(): { tracks: Track[]; albums: Album[] } {
     const albumTitle = folder;
     const artistName = folder === 'rakunio' ? 'Rakun.io' : 'Lofi Producer';
 
+    // Find folder cover image if available (e.g., /public/music/rakunio/cover.jpg or cover.png)
+    const folderPath = parts.join('/');
+    let folderCover = withBase('/favicon.svg');
+    for (const imgPath in imageModules) {
+      if (imgPath.startsWith(folderPath + '/')) {
+        const imgUrl = imageModules[imgPath];
+        if (imgUrl) {
+          folderCover = withBase(imgUrl.replace(/^\/(rakunio\/)+/, '/'));
+          break;
+        }
+      }
+    }
+
     // Find matching LRC content
     const lrcPath = rawPath.replace(/\.mp3$/i, '.lrc');
     const lrcContent = lrcModules[lrcPath] || undefined;
@@ -116,7 +130,7 @@ function scanMusicGlob(): { tracks: Track[]; albums: Album[] } {
       artist: artistName,
       album: albumTitle,
       albumId,
-      cover: withBase('/favicon.svg'),
+      cover: folderCover,
       audioUrl,
       duration: 150,
       externalLinks,
@@ -130,7 +144,7 @@ function scanMusicGlob(): { tracks: Track[]; albums: Album[] } {
         id: albumId,
         title: albumTitle,
         artist: artistName,
-        cover: withBase('/favicon.svg'),
+        cover: folderCover,
         year: 2026,
         description: `Carpeta ${albumTitle}`,
         tracks: [],
