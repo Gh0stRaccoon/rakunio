@@ -75,10 +75,11 @@ function slugify(text: string): string {
 }
 
 function scanMusicGlob(): { tracks: Track[]; albums: Album[] } {
-  // Vite's eager glob scanner dynamically discovers all MP3, LRC, & cover image files inside /public/music/
+  // Vite's eager glob scanner dynamically discovers all MP3, LRC, image, & MD files inside /public/music/
   const mp3Modules = import.meta.glob('/public/music/**/*.mp3', { query: '?url', import: 'default', eager: true }) as Record<string, string>;
   const lrcModules = import.meta.glob('/public/music/**/*.lrc', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
   const imageModules = import.meta.glob('/public/music/**/*.{jpg,jpeg,png,webp,svg}', { query: '?url', import: 'default', eager: true }) as Record<string, string>;
+  const mdModules = import.meta.glob('/public/music/**/*.md', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
 
   const tracks: Track[] = [];
   const albumsMap = new Map<string, Album>();
@@ -108,6 +109,18 @@ function scanMusicGlob(): { tracks: Track[]; albums: Album[] } {
         const imgUrl = imageModules[imgPath];
         if (imgUrl) {
           folderCover = withBase(imgUrl.replace(/^\/(rakunio\/)+/, '/'));
+          break;
+        }
+      }
+    }
+
+    // Find folder description MD file if available (e.g., README.md or info.md)
+    let folderDescription = `Carpeta ${albumTitle}`;
+    for (const mdPath in mdModules) {
+      if (mdPath.startsWith(folderPath + '/')) {
+        const mdText = mdModules[mdPath];
+        if (mdText) {
+          folderDescription = mdText.trim();
           break;
         }
       }
@@ -146,7 +159,7 @@ function scanMusicGlob(): { tracks: Track[]; albums: Album[] } {
         artist: artistName,
         cover: folderCover,
         year: 2026,
-        description: `Carpeta ${albumTitle}`,
+        description: folderDescription,
         tracks: [],
         externalLinks: { ...ARTIST_PROFILES }
       });

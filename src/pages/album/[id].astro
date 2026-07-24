@@ -213,7 +213,12 @@ const albumSchema = {
           <span id="main-artist-name" class="artist-name">{defaultTrack.artist}</span>
         </div>
 
-        <!-- Synced Lyrics Component (Desktop Column) -->
+        <!-- Album Description Box (Shown when in presentation mode) -->
+        <div class="album-description-box" id="album-description-box">
+          <p class="album-description-text">{album.description}</p>
+        </div>
+
+        <!-- Synced Lyrics Component (Desktop Column, Shown in Player Mode) -->
         <div class="lyrics-wrapper-desktop">
           <LrcLyrics />
         </div>
@@ -734,6 +739,27 @@ const albumSchema = {
   .player-main-workspace.mode-album-header #btn-prev-main,
   .player-main-workspace.mode-album-header #btn-next-main {
     display: none !important;
+  }
+
+  .player-main-workspace.mode-player-active .album-description-box {
+    display: none !important;
+  }
+
+  .album-description-box {
+    background: rgba(255, 255, 255, 0.45);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-md);
+    padding: 20px 24px;
+    margin-top: 16px;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .album-description-text {
+    font-size: 0.95rem;
+    line-height: 1.65;
+    color: var(--text-main);
+    white-space: pre-line;
+    font-weight: 500;
   }
 
   .player-main-workspace.mode-album-header .controls-row {
