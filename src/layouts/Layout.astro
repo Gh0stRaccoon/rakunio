@@ -108,16 +108,6 @@ const currentPath = Astro.url.pathname;
 
         <nav class="sidebar-nav">
           <span class="nav-section-title">Carpetas</span>
-          
-          <a href={withBase('/')} class={`nav-link ${currentPath === withBase('/') || currentPath === '/' ? 'active' : ''}`}>
-            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="3" y="3" width="7" height="7"/>
-              <rect x="14" y="3" width="7" height="7"/>
-              <rect x="14" y="14" width="7" height="7"/>
-              <rect x="3" y="14" width="7" height="7"/>
-            </svg>
-            <span>all</span>
-          </a>
 
           {ALBUMS.map((album) => (
             <a href={withBase(`/album/${album.id}`)} class={`nav-link ${currentPath.includes(`/album/${album.id}`) ? 'active' : ''}`}>
