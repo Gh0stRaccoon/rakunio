@@ -1,53 +1,53 @@
 ---
-import Layout from '../../layouts/Layout.astro';
-import CanvasVisualizer from '../../components/CanvasVisualizer.astro';
-import LrcLyrics from '../../components/LrcLyrics.astro';
-import { ALBUMS } from '../../data/tracks';
-import type { Track } from '../../types/track';
-import { withBase } from '../../utils/base';
+import Layout from "../../layouts/Layout.astro";
+import CanvasVisualizer from "../../components/CanvasVisualizer.astro";
+import LrcLyrics from "../../components/LrcLyrics.astro";
+import { ALBUMS } from "../../data/tracks";
+import type { Track } from "../../types/track";
+import { withBase } from "../../utils/base";
 
 export function getStaticPaths() {
   return ALBUMS.map((album) => ({
     params: { id: album.id },
-    props: { album, albumTracks: album.tracks }
+    props: { album, albumTracks: album.tracks },
   }));
 }
 
 const { album, albumTracks } = Astro.props;
 
 const fallbackTrack: Track = {
-  id: 'fallback',
-  title: 'Sin título',
-  artist: 'Rakun.io',
-  album: 'rakunio',
-  albumId: 'rakunio',
+  id: "fallback",
+  title: "Sin título",
+  artist: "Rakun.io",
+  album: "rakunio",
+  albumId: "rakunio",
   duration: 150,
-  cover: withBase('/rakunio_logo.jpeg'),
-  audioUrl: ''
+  cover: withBase("/rakunio_logo.jpeg"),
+  audioUrl: "",
 };
 
 const defaultTrack: Track = albumTracks[0] || album.tracks[0] || fallbackTrack;
 
 const albumSchema = {
-  '@context': 'https://schema.org',
-  '@type': 'MusicAlbum',
-  'name': album.title,
-  'byArtist': { '@type': 'MusicGroup', 'name': album.artist },
-  'image': album.cover,
-  'datePublished': `${album.year}`,
-  'description': album.description,
-  'numTracks': album.tracks.length,
-  'track': album.tracks.map(t => ({
-    '@type': 'MusicRecording',
-    'name': t.title,
-    'byArtist': { '@type': 'MusicGroup', 'name': t.artist },
-    'duration': `PT${Math.floor(t.duration / 60)}M${t.duration % 60}S`
-  }))
+  "@context": "https://schema.org",
+  "@type": "MusicAlbum",
+  name: album.title,
+  byArtist: { "@type": "MusicGroup", name: album.artist },
+  image: album.cover,
+  datePublished: `${album.year}`,
+  description: album.description,
+  numTracks: album.tracks.length,
+  track: album.tracks.map((t) => ({
+    "@type": "MusicRecording",
+    name: t.title,
+    byArtist: { "@type": "MusicGroup", name: t.artist },
+    duration: `PT${Math.floor(t.duration / 60)}M${t.duration % 60}S`,
+  })),
 };
 ---
 
-<Layout 
-  title={`${album.title} — Beats | Rakunio`} 
+<Layout
+  title={`${album.title} — Beats | Rakunio`}
   description={album.description}
   image={album.cover}
   jsonLd={albumSchema}
@@ -56,31 +56,52 @@ const albumSchema = {
   <div class="player-main-workspace glass-panel">
     <!-- Top Area: 2 Columns with Presentation and Player Dual Views -->
     <div class="player-top-row mode-presentation" id="album-top-container">
-      
       <!-- PRESENTATION MODE VIEW (LEFT: Album Portrait Cover) -->
-      <div class="player-left-col presentation-view" id="player-left-presentation">
+      <div
+        class="player-left-col presentation-view"
+        id="player-left-presentation"
+      >
         <div class="album-aura-container presentation-aura">
           <div class="aura-glow"></div>
           <div class="album-portrait-stage">
-            <img src={album.cover} alt={album.title} class="album-portrait-img" />
+            <img
+              src={album.cover}
+              alt={album.title}
+              class="album-portrait-img"
+            />
           </div>
         </div>
       </div>
 
       <!-- PRESENTATION MODE VIEW (RIGHT: Album Metadata & Play All Hero Button) -->
-      <div class="player-right-col presentation-view" id="player-right-presentation">
+      <div
+        class="player-right-col presentation-view"
+        id="player-right-presentation"
+      >
         <div class="track-header-meta">
-          <span class="category-badge">COLECCIÓN • {albumTracks.length} BEATS</span>
+          <span class="category-badge"
+            >COLECCIÓN • {albumTracks.length} BEATS</span
+          >
           <div class="title-like-row">
             <h1 class="track-title">{album.title}</h1>
             <div class="header-action-group">
-              <button id="btn-share-album" class="action-btn" title="Compartir colección">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="action-icon">
-                  <circle cx="18" cy="5" r="3"/>
-                  <circle cx="6" cy="12" r="3"/>
-                  <circle cx="18" cy="19" r="3"/>
-                  <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
-                  <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+              <button
+                id="btn-share-album"
+                class="action-btn"
+                title="Compartir colección"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  class="action-icon"
+                >
+                  <circle cx="18" cy="5" r="3"></circle>
+                  <circle cx="6" cy="12" r="3"></circle>
+                  <circle cx="18" cy="19" r="3"></circle>
+                  <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                  <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
                 </svg>
               </button>
             </div>
@@ -88,9 +109,19 @@ const albumSchema = {
           <span class="artist-name">{album.artist}</span>
         </div>
 
-        <button id="btn-play-album-hero" class="album-play-hero-btn" title="Reproducir Álbum Completo">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="play-hero-icon">
-            <polygon points="5 3 19 12 5 21 5 3" fill="currentColor"/>
+        <button
+          id="btn-play-album-hero"
+          class="album-play-hero-btn"
+          title="Reproducir Álbum Completo"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            class="play-hero-icon"
+          >
+            <polygon points="5 3 19 12 5 21 5 3" fill="currentColor"></polygon>
           </svg>
           <span>Reproducir Todo</span>
         </button>
@@ -104,38 +135,92 @@ const albumSchema = {
       <div class="player-left-col player-view" id="player-left-player">
         <div class="album-aura-container">
           <div class="aura-glow"></div>
-          
+
           <!-- Continuous 5-Card 3D Cover Stage -->
           <div class="cover-stage" id="cover-stage">
             <!-- 5 Persistent Cards mapped dynamically by data-pos -->
             <div class="cover-card" data-card-slot="0" data-pos="-2">
-              <img id="card-img-0" src={defaultTrack.cover} alt="Cover" class="card-img" />
+              <img
+                id="card-img-0"
+                src={defaultTrack.cover}
+                alt="Cover"
+                class="card-img"
+              />
             </div>
 
-            <div class="cover-card" data-card-slot="1" data-pos="-1" title="Canción anterior">
-              <img id="card-img-1" src={defaultTrack.cover} alt="Cover" class="card-img" />
+            <div
+              class="cover-card"
+              data-card-slot="1"
+              data-pos="-1"
+              title="Canción anterior"
+            >
+              <img
+                id="card-img-1"
+                src={defaultTrack.cover}
+                alt="Cover"
+                class="card-img"
+              />
               <div class="card-overlay">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="card-icon">
-                  <polygon points="19 20 9 12 19 4 19 20" fill="currentColor"/>
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  class="card-icon"
+                >
+                  <polygon points="19 20 9 12 19 4 19 20" fill="currentColor"
+                  ></polygon>
                 </svg>
               </div>
             </div>
 
-            <div class="cover-card" data-card-slot="2" data-pos="0" id="cover-slide-container">
-              <img id="card-img-2" src={defaultTrack.cover} alt="Cover" class="card-img main-img" />
+            <div
+              class="cover-card"
+              data-card-slot="2"
+              data-pos="0"
+              id="cover-slide-container"
+            >
+              <img
+                id="card-img-2"
+                src={defaultTrack.cover}
+                alt="Cover"
+                class="card-img main-img"
+              />
             </div>
 
-            <div class="cover-card" data-card-slot="3" data-pos="1" title="Siguiente canción">
-              <img id="card-img-3" src={defaultTrack.cover} alt="Cover" class="card-img" />
+            <div
+              class="cover-card"
+              data-card-slot="3"
+              data-pos="1"
+              title="Siguiente canción"
+            >
+              <img
+                id="card-img-3"
+                src={defaultTrack.cover}
+                alt="Cover"
+                class="card-img"
+              />
               <div class="card-overlay">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="card-icon">
-                  <polygon points="5 4 15 12 5 20 5 4" fill="currentColor"/>
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  class="card-icon"
+                >
+                  <polygon points="5 4 15 12 5 20 5 4" fill="currentColor"
+                  ></polygon>
                 </svg>
               </div>
             </div>
 
             <div class="cover-card" data-card-slot="4" data-pos="2">
-              <img id="card-img-4" src={defaultTrack.cover} alt="Cover" class="card-img" />
+              <img
+                id="card-img-4"
+                src={defaultTrack.cover}
+                alt="Cover"
+                class="card-img"
+              />
             </div>
 
             <!-- Free Spectrum Visualizer Overlay Centered Vertically Over Active Cover Card -->
@@ -147,7 +232,11 @@ const albumSchema = {
             <div class="mobile-lyrics-overlay" id="mobile-lyrics-overlay">
               <div class="overlay-header">
                 <span class="overlay-title">Letra</span>
-                <button id="btn-close-lyrics-overlay" class="overlay-close-btn" title="Cerrar letra">✕</button>
+                <button
+                  id="btn-close-lyrics-overlay"
+                  class="overlay-close-btn"
+                  title="Cerrar letra">✕</button
+                >
               </div>
               <div class="overlay-lyrics-body">
                 <LrcLyrics />
@@ -156,11 +245,23 @@ const albumSchema = {
           </div>
 
           <!-- Mobile Lyrics Toggle Floating Action Button -->
-          <button id="btn-toggle-lyrics-overlay" class="mobile-lyrics-toggle-btn" title="Ver letra sobre carátula">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="lyrics-toggle-icon">
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-              <line x1="9" y1="9" x2="15" y2="9"/>
-              <line x1="9" y1="13" x2="13" y2="13"/>
+          <button
+            id="btn-toggle-lyrics-overlay"
+            class="mobile-lyrics-toggle-btn"
+            title="Ver letra sobre carátula"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              class="lyrics-toggle-icon"
+            >
+              <path
+                d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
+              ></path>
+              <line x1="9" y1="9" x2="15" y2="9"></line>
+              <line x1="9" y1="13" x2="13" y2="13"></line>
             </svg>
             <span class="lyrics-toggle-label">Ver Letra</span>
           </button>
@@ -178,83 +279,171 @@ const albumSchema = {
         <!-- Control Action Buttons -->
         <div class="controls-row">
           <button id="btn-shuffle" class="icon-btn" title="Modo Aleatorio">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon">
-              <polyline points="16 3 21 3 21 8"/>
-              <line x1="4" y1="20" x2="21" y2="3"/>
-              <polyline points="21 16 21 21 16 21"/>
-              <line x1="15" y1="15" x2="21" y2="21"/>
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              class="icon"
+            >
+              <polyline points="16 3 21 3 21 8"></polyline>
+              <line x1="4" y1="20" x2="21" y2="3"></line>
+              <polyline points="21 16 21 21 16 21"></polyline>
+              <line x1="15" y1="15" x2="21" y2="21"></line>
             </svg>
           </button>
 
           <button id="btn-prev-main" class="icon-btn" title="Anterior">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon">
-              <polygon points="19 20 9 12 19 4 19 20" fill="currentColor"/>
-              <line x1="5" y1="19" x2="5" y2="5" stroke-linecap="round"/>
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              class="icon"
+            >
+              <polygon points="19 20 9 12 19 4 19 20" fill="currentColor"
+              ></polygon>
+              <line x1="5" y1="19" x2="5" y2="5" stroke-linecap="round"></line>
             </svg>
           </button>
 
-          <button id="btn-play-main" class="main-play-btn" title="Reproducir / Pausar">
-            <svg id="icon-play-main" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="main-play-icon">
-              <polygon points="5 3 19 12 5 21 5 3" fill="currentColor"/>
+          <button
+            id="btn-play-main"
+            class="main-play-btn"
+            title="Reproducir / Pausar"
+          >
+            <svg
+              id="icon-play-main"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              class="main-play-icon"
+            >
+              <polygon points="5 3 19 12 5 21 5 3" fill="currentColor"
+              ></polygon>
             </svg>
-            <svg id="icon-pause-main" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="main-play-icon hidden">
-              <rect x="6" y="4" width="4" height="16" fill="currentColor"/>
-              <rect x="14" y="4" width="4" height="16" fill="currentColor"/>
+            <svg
+              id="icon-pause-main"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              class="main-play-icon hidden"
+            >
+              <rect x="6" y="4" width="4" height="16" fill="currentColor"
+              ></rect>
+              <rect x="14" y="4" width="4" height="16" fill="currentColor"
+              ></rect>
             </svg>
           </button>
 
           <button id="btn-next-main" class="icon-btn" title="Siguiente">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon">
-              <polygon points="5 4 15 12 5 20 5 4" fill="currentColor"/>
-              <line x1="19" y1="5" x2="19" y2="19" stroke-linecap="round"/>
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              class="icon"
+            >
+              <polygon points="5 4 15 12 5 20 5 4" fill="currentColor"
+              ></polygon>
+              <line x1="19" y1="5" x2="19" y2="19" stroke-linecap="round"
+              ></line>
             </svg>
           </button>
 
           <button id="btn-repeat" class="icon-btn" title="Modo Repetir">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon">
-              <polyline points="17 1 21 5 17 9"/>
-              <path d="M3 11V9a4 4 0 0 1 4-4h14"/>
-              <polyline points="7 23 3 19 7 15"/>
-              <path d="M21 13v2a4 4 0 0 1-4 4H3"/>
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              class="icon"
+            >
+              <polyline points="17 1 21 5 17 9"></polyline>
+              <path d="M3 11V9a4 4 0 0 1 4-4h14"></path>
+              <polyline points="7 23 3 19 7 15"></polyline>
+              <path d="M21 13v2a4 4 0 0 1-4 4H3"></path>
             </svg>
           </button>
         </div>
 
         <!-- Volume Bar -->
         <div class="volume-row">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="vol-icon">
-            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="currentColor"/>
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            class="vol-icon"
+          >
+            <polygon
+              points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"
+              fill="currentColor"></polygon>
           </svg>
-          <input id="vol-range-main" type="range" min="0" max="1" step="0.01" value="0.8" class="vol-slider-main" />
+          <input
+            id="vol-range-main"
+            type="range"
+            min="0"
+            max="1"
+            step="0.01"
+            value="0.8"
+            class="vol-slider-main"
+          />
         </div>
       </div>
 
       <!-- PLAYER MODE VIEW (RIGHT: Track Info + Synced Lyrics Desktop) -->
       <div class="player-right-col player-view" id="player-right-player">
         <div class="track-header-meta">
-          <span id="main-category-badge" class="category-badge">{album.title.toUpperCase()}</span>
+          <span id="main-category-badge" class="category-badge"
+            >{album.title.toUpperCase()}</span
+          >
           <div class="title-like-row">
-            <h1 id="main-track-title" class="track-title">{defaultTrack.title}</h1>
-            
+            <h1 id="main-track-title" class="track-title">
+              {defaultTrack.title}
+            </h1>
+
             <div class="header-action-group">
-              <button id="btn-share-main" class="action-btn" title="Compartir canción">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="action-icon">
-                  <circle cx="18" cy="5" r="3"/>
-                  <circle cx="6" cy="12" r="3"/>
-                  <circle cx="18" cy="19" r="3"/>
-                  <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
-                  <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+              <button
+                id="btn-share-main"
+                class="action-btn"
+                title="Compartir canción"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  class="action-icon"
+                >
+                  <circle cx="18" cy="5" r="3"></circle>
+                  <circle cx="6" cy="12" r="3"></circle>
+                  <circle cx="18" cy="19" r="3"></circle>
+                  <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                  <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
                 </svg>
               </button>
-              
+
               <button id="btn-like" class="like-btn" title="Favorito">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="like-icon">
-                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  class="like-icon"
+                >
+                  <path
+                    d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
+                  ></path>
                 </svg>
               </button>
             </div>
           </div>
-          <span id="main-artist-name" class="artist-name">{defaultTrack.artist}</span>
+          <span id="main-artist-name" class="artist-name"
+            >{defaultTrack.artist}</span
+          >
         </div>
 
         <!-- Synced Lyrics Component (Desktop Column) -->
@@ -268,56 +457,102 @@ const albumSchema = {
     <div class="playlist-section">
       <div class="playlist-section-header">
         <div class="playlist-header-title">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="playlist-header-icon">
-            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            class="playlist-header-icon"
+          >
+            <path
+              d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"
+            ></path>
           </svg>
-          <span class="quick-title">Colección: {album.title} ({albumTracks.length} beats)</span>
+          <span class="quick-title"
+            >Colección: {album.title} ({albumTracks.length} beats)</span
+          >
         </div>
 
-        <button id="btn-toggle-playlist" class="playlist-toggle-btn" title="Mostrar / Ocultar lista">
+        <button
+          id="btn-toggle-playlist"
+          class="playlist-toggle-btn"
+          title="Mostrar / Ocultar lista"
+        >
           <span id="toggle-playlist-label">Ocultar lista</span>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="toggle-icon">
-            <polyline points="18 15 12 9 6 15"/>
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            class="toggle-icon"
+          >
+            <polyline points="18 15 12 9 6 15"></polyline>
           </svg>
         </button>
       </div>
 
       <div class="playlist-vertical-list" id="playlist-container">
-        {albumTracks.map((t, idx) => (
-          <div class="playlist-track-row" data-track-id={t.id}>
-            <span class="track-idx">{idx + 1}</span>
-            <img src={t.cover} alt={t.title} class="playlist-thumb" data-audio-url={t.audioUrl} />
-            <div class="playlist-track-meta" data-action="play">
-              <span class="playlist-track-name">{t.title}</span>
-              <span class="playlist-track-artist">{t.artist}</span>
+        {
+          albumTracks.map((t, idx) => (
+            <div class="playlist-track-row" data-track-id={t.id}>
+              <span class="track-idx">{idx + 1}</span>
+              <img
+                src={t.cover}
+                alt={t.title}
+                class="playlist-thumb"
+                data-audio-url={t.audioUrl}
+              />
+              <div class="playlist-track-meta" data-action="play">
+                <span class="playlist-track-name">{t.title}</span>
+                <span class="playlist-track-artist">{t.artist}</span>
+              </div>
+              <span class="playlist-track-album" data-action="play">
+                {t.album}
+              </span>
+              <span class="playlist-track-duration">
+                {t.duration || "2:30"}
+              </span>
+              <button
+                class="row-share-btn"
+                data-share-id={t.id}
+                title="Copiar enlace de canción"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  class="row-share-icon"
+                >
+                  <circle cx="18" cy="5" r="3" />
+                  <circle cx="6" cy="12" r="3" />
+                  <circle cx="18" cy="19" r="3" />
+                  <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                  <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+                </svg>
+              </button>
             </div>
-            <span class="playlist-track-album" data-action="play">{t.album}</span>
-            <span class="playlist-track-duration">{t.duration || '2:30'}</span>
-            <button class="row-share-btn" data-share-id={t.id} title="Copiar enlace de canción">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="row-share-icon">
-                <circle cx="18" cy="5" r="3"/>
-                <circle cx="6" cy="12" r="3"/>
-                <circle cx="18" cy="19" r="3"/>
-                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
-                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
-              </svg>
-            </button>
-          </div>
-        ))}
+          ))
+        }
       </div>
     </div>
   </div>
 
-  <div id="album-raw-tracks" data-tracks={JSON.stringify(albumTracks)} class="hidden"></div>
+  <div
+    id="album-raw-tracks"
+    data-tracks={JSON.stringify(albumTracks)}
+    class="hidden"
+  >
+  </div>
 </Layout>
 
 <script>
-  import { AudioEngine } from '../../lib/audio/AudioEngine';
-  import { 
-    $currentTrack, 
-    $isPlaying, 
-    $currentTime, 
-    $duration, 
+  import { AudioEngine } from "../../lib/audio/AudioEngine";
+  import {
+    $currentTrack,
+    $isPlaying,
+    $currentTime,
+    $duration,
     $volume,
     $queue,
     $isShuffle,
@@ -329,58 +564,60 @@ const albumSchema = {
     cycleRepeatMode,
     playNext,
     playPrevious,
-    setVolume
-  } from '../../lib/audio/PlayerStore';
-  import { extractAudioMetadata } from '../../lib/audio/MetadataExtractor';
-  import { withBase } from '../../utils/base';
+    setVolume,
+  } from "../../lib/audio/PlayerStore";
+  import { extractAudioMetadata } from "../../lib/audio/MetadataExtractor";
+  import { withBase } from "../../utils/base";
 
   let isPlaylistVisible = true;
   let isAnimating = false;
   let isMobileLyricsOverlayOpen = false;
 
   function updatePlayIconUI(playing: boolean) {
-    const iconPlay = document.getElementById('icon-play-main');
-    const iconPause = document.getElementById('icon-pause-main');
+    const iconPlay = document.getElementById("icon-play-main");
+    const iconPause = document.getElementById("icon-pause-main");
     if (playing) {
-      iconPlay?.classList.add('hidden');
-      iconPause?.classList.remove('hidden');
+      iconPlay?.classList.add("hidden");
+      iconPause?.classList.remove("hidden");
     } else {
-      iconPlay?.classList.remove('hidden');
-      iconPause?.classList.add('hidden');
+      iconPlay?.classList.remove("hidden");
+      iconPause?.classList.add("hidden");
     }
   }
 
   function updateShuffleIconUI(isShuffle: boolean) {
-    const btnShuffle = document.getElementById('btn-shuffle');
+    const btnShuffle = document.getElementById("btn-shuffle");
     if (btnShuffle) {
       if (isShuffle) {
-        btnShuffle.classList.add('active');
+        btnShuffle.classList.add("active");
       } else {
-        btnShuffle.classList.remove('active');
+        btnShuffle.classList.remove("active");
       }
     }
   }
 
   function updateRepeatIconUI(mode: string) {
-    const btnRepeat = document.getElementById('btn-repeat');
+    const btnRepeat = document.getElementById("btn-repeat");
     if (btnRepeat) {
-      btnRepeat.classList.remove('active', 'active-one');
-      if (mode === 'all') {
-        btnRepeat.classList.add('active');
-      } else if (mode === 'one') {
-        btnRepeat.classList.add('active', 'active-one');
+      btnRepeat.classList.remove("active", "active-one");
+      if (mode === "all") {
+        btnRepeat.classList.add("active");
+      } else if (mode === "one") {
+        btnRepeat.classList.add("active", "active-one");
       }
     }
   }
 
   function initAlbumPlayer() {
     AudioEngine.init();
-    
+
     // Parse album tracks to ensure availability
-    const rawContainer = document.getElementById('album-raw-tracks');
+    const rawContainer = document.getElementById("album-raw-tracks");
     if (rawContainer) {
       try {
-        const albumTracks = JSON.parse(rawContainer.getAttribute('data-tracks') || '[]');
+        const albumTracks = JSON.parse(
+          rawContainer.getAttribute("data-tracks") || "[]",
+        );
         if (albumTracks.length > 0) {
           const current = $currentTrack.get();
           if (!current) {
@@ -390,35 +627,45 @@ const albumSchema = {
       } catch (e) {}
     }
 
-    const playBtn = document.getElementById('btn-play-main');
-    const btnNext = document.getElementById('btn-next-main');
-    const btnPrev = document.getElementById('btn-prev-main');
-    const btnShuffle = document.getElementById('btn-shuffle');
-    const btnRepeat = document.getElementById('btn-repeat');
+    const playBtn = document.getElementById("btn-play-main");
+    const btnNext = document.getElementById("btn-next-main");
+    const btnPrev = document.getElementById("btn-prev-main");
+    const btnShuffle = document.getElementById("btn-shuffle");
+    const btnRepeat = document.getElementById("btn-repeat");
 
-    const coverStage = document.getElementById('cover-stage');
-    const btnTogglePlaylist = document.getElementById('btn-toggle-playlist');
-    const toggleLabel = document.getElementById('toggle-playlist-label');
-    const playlistContainer = document.getElementById('playlist-container');
-    const volSlider = document.getElementById('vol-range-main') as HTMLInputElement;
+    const coverStage = document.getElementById("cover-stage");
+    const btnTogglePlaylist = document.getElementById("btn-toggle-playlist");
+    const toggleLabel = document.getElementById("toggle-playlist-label");
+    const playlistContainer = document.getElementById("playlist-container");
+    const volSlider = document.getElementById(
+      "vol-range-main",
+    ) as HTMLInputElement;
 
-    const btnToggleLyricsOverlay = document.getElementById('btn-toggle-lyrics-overlay');
-    const btnCloseLyricsOverlay = document.getElementById('btn-close-lyrics-overlay');
-    const mobileLyricsOverlay = document.getElementById('mobile-lyrics-overlay');
+    const btnToggleLyricsOverlay = document.getElementById(
+      "btn-toggle-lyrics-overlay",
+    );
+    const btnCloseLyricsOverlay = document.getElementById(
+      "btn-close-lyrics-overlay",
+    );
+    const mobileLyricsOverlay = document.getElementById(
+      "mobile-lyrics-overlay",
+    );
 
-    const title = document.getElementById('main-track-title');
-    const artist = document.getElementById('main-artist-name');
-    const category = document.getElementById('main-category-badge');
-    const seekBar = document.getElementById('seek-bar');
+    const title = document.getElementById("main-track-title");
+    const artist = document.getElementById("main-artist-name");
+    const category = document.getElementById("main-category-badge");
+    const seekBar = document.getElementById("seek-bar");
 
     if (playBtn && !(playBtn as any)._bound) {
       (playBtn as any)._bound = true;
-      playBtn.addEventListener('click', () => {
+      playBtn.addEventListener("click", () => {
         const current = $currentTrack.get();
         // If current track is not from this album, set queue to this album and play first track
-        const rawContainer = document.getElementById('album-raw-tracks');
+        const rawContainer = document.getElementById("album-raw-tracks");
         if (rawContainer) {
-          const albumTracks = JSON.parse(rawContainer.getAttribute('data-tracks') || '[]');
+          const albumTracks = JSON.parse(
+            rawContainer.getAttribute("data-tracks") || "[]",
+          );
           if (!current || !albumTracks.some((t: any) => t.id === current.id)) {
             setQueue(albumTracks);
             playTrack(albumTracks[0], true);
@@ -431,35 +678,38 @@ const albumSchema = {
 
     if (btnNext && !(btnNext as any)._bound) {
       (btnNext as any)._bound = true;
-      btnNext.addEventListener('click', () => triggerNext3D());
+      btnNext.addEventListener("click", () => triggerNext3D());
     }
 
     if (btnPrev && !(btnPrev as any)._bound) {
       (btnPrev as any)._bound = true;
-      btnPrev.addEventListener('click', () => triggerPrev3D());
+      btnPrev.addEventListener("click", () => triggerPrev3D());
     }
 
     if (btnShuffle && !(btnShuffle as any)._bound) {
       (btnShuffle as any)._bound = true;
-      btnShuffle.addEventListener('click', () => toggleShuffle());
+      btnShuffle.addEventListener("click", () => toggleShuffle());
     }
 
     if (btnRepeat && !(btnRepeat as any)._bound) {
       (btnRepeat as any)._bound = true;
-      btnRepeat.addEventListener('click', () => cycleRepeatMode());
+      btnRepeat.addEventListener("click", () => cycleRepeatMode());
     }
 
     if (btnToggleLyricsOverlay && !(btnToggleLyricsOverlay as any)._bound) {
       (btnToggleLyricsOverlay as any)._bound = true;
-      btnToggleLyricsOverlay.addEventListener('click', (e) => {
+      btnToggleLyricsOverlay.addEventListener("click", (e) => {
         e.stopPropagation();
         isMobileLyricsOverlayOpen = !isMobileLyricsOverlayOpen;
         if (mobileLyricsOverlay) {
           if (isMobileLyricsOverlayOpen) {
-            mobileLyricsOverlay.classList.add('active');
-            setTimeout(() => window.dispatchEvent(new CustomEvent('realign-lrc')), 100);
+            mobileLyricsOverlay.classList.add("active");
+            setTimeout(
+              () => window.dispatchEvent(new CustomEvent("realign-lrc")),
+              100,
+            );
           } else {
-            mobileLyricsOverlay.classList.remove('active');
+            mobileLyricsOverlay.classList.remove("active");
           }
         }
       });
@@ -467,31 +717,36 @@ const albumSchema = {
 
     if (btnCloseLyricsOverlay && !(btnCloseLyricsOverlay as any)._bound) {
       (btnCloseLyricsOverlay as any)._bound = true;
-      btnCloseLyricsOverlay.addEventListener('click', (e) => {
+      btnCloseLyricsOverlay.addEventListener("click", (e) => {
         e.stopPropagation();
         isMobileLyricsOverlayOpen = false;
-        if (mobileLyricsOverlay) mobileLyricsOverlay.classList.remove('active');
+        if (mobileLyricsOverlay) mobileLyricsOverlay.classList.remove("active");
       });
     }
 
     if (coverStage && !(coverStage as any)._bound) {
       (coverStage as any)._bound = true;
-      coverStage.addEventListener('click', (e) => {
-        if ((e.target as HTMLElement).closest('#mobile-lyrics-overlay')) return;
+      coverStage.addEventListener("click", (e) => {
+        if ((e.target as HTMLElement).closest("#mobile-lyrics-overlay")) return;
 
-        const card = (e.target as HTMLElement).closest('.cover-card');
+        const card = (e.target as HTMLElement).closest(".cover-card");
         if (!card) return;
-        const pos = card.getAttribute('data-pos');
-        if (pos === '1') {
+        const pos = card.getAttribute("data-pos");
+        if (pos === "1") {
           triggerNext3D();
-        } else if (pos === '-1') {
+        } else if (pos === "-1") {
           triggerPrev3D();
-        } else if (pos === '0') {
+        } else if (pos === "0") {
           const current = $currentTrack.get();
-          const rawContainer = document.getElementById('album-raw-tracks');
+          const rawContainer = document.getElementById("album-raw-tracks");
           if (rawContainer) {
-            const albumTracks = JSON.parse(rawContainer.getAttribute('data-tracks') || '[]');
-            if (!current || !albumTracks.some((t: any) => t.id === current.id)) {
+            const albumTracks = JSON.parse(
+              rawContainer.getAttribute("data-tracks") || "[]",
+            );
+            if (
+              !current ||
+              !albumTracks.some((t: any) => t.id === current.id)
+            ) {
               setQueue(albumTracks);
               playTrack(albumTracks[0], true);
               return;
@@ -504,15 +759,15 @@ const albumSchema = {
 
     if (btnTogglePlaylist && !(btnTogglePlaylist as any)._bound) {
       (btnTogglePlaylist as any)._bound = true;
-      btnTogglePlaylist.addEventListener('click', () => {
+      btnTogglePlaylist.addEventListener("click", () => {
         isPlaylistVisible = !isPlaylistVisible;
         if (playlistContainer) {
           if (isPlaylistVisible) {
-            playlistContainer.classList.remove('collapsed');
-            if (toggleLabel) toggleLabel.textContent = 'Ocultar lista';
+            playlistContainer.classList.remove("collapsed");
+            if (toggleLabel) toggleLabel.textContent = "Ocultar lista";
           } else {
-            playlistContainer.classList.add('collapsed');
-            if (toggleLabel) toggleLabel.textContent = 'Mostrar lista';
+            playlistContainer.classList.add("collapsed");
+            if (toggleLabel) toggleLabel.textContent = "Mostrar lista";
           }
         }
       });
@@ -520,14 +775,14 @@ const albumSchema = {
 
     if (volSlider && !(volSlider as any)._bound) {
       (volSlider as any)._bound = true;
-      volSlider.addEventListener('input', (e) => {
+      volSlider.addEventListener("input", (e) => {
         setVolume(parseFloat((e.target as HTMLInputElement).value));
       });
     }
 
     if (seekBar && !(seekBar as any)._bound) {
       (seekBar as any)._bound = true;
-      seekBar.addEventListener('click', (e) => {
+      seekBar.addEventListener("click", (e) => {
         const rect = seekBar.getBoundingClientRect();
         const pct = (e.clientX - rect.left) / rect.width;
         const dur = $duration.get();
@@ -537,13 +792,15 @@ const albumSchema = {
       });
     }
 
-    const btnPlayAlbumHero = document.getElementById('btn-play-album-hero');
+    const btnPlayAlbumHero = document.getElementById("btn-play-album-hero");
     if (btnPlayAlbumHero && !(btnPlayAlbumHero as any)._bound) {
       (btnPlayAlbumHero as any)._bound = true;
-      btnPlayAlbumHero.addEventListener('click', () => {
-        const rawContainer = document.getElementById('album-raw-tracks');
+      btnPlayAlbumHero.addEventListener("click", () => {
+        const rawContainer = document.getElementById("album-raw-tracks");
         if (rawContainer) {
-          const albumTracks = JSON.parse(rawContainer.getAttribute('data-tracks') || '[]');
+          const albumTracks = JSON.parse(
+            rawContainer.getAttribute("data-tracks") || "[]",
+          );
           if (albumTracks.length > 0) {
             setQueue(albumTracks);
             playTrack(albumTracks[0], true);
@@ -553,23 +810,25 @@ const albumSchema = {
       });
     }
 
-    const playlistRows = document.querySelectorAll('.playlist-track-row');
+    const playlistRows = document.querySelectorAll(".playlist-track-row");
     playlistRows.forEach((row) => {
       if (!(row as any)._bound) {
         (row as any)._bound = true;
-        row.addEventListener('click', (e) => {
-          const shareBtn = (e.target as HTMLElement).closest('[data-share-id]');
+        row.addEventListener("click", (e) => {
+          const shareBtn = (e.target as HTMLElement).closest("[data-share-id]");
           if (shareBtn) {
             e.stopPropagation();
-            const shareId = shareBtn.getAttribute('data-share-id');
+            const shareId = shareBtn.getAttribute("data-share-id");
             if (shareId) copyTrackShareLink(shareId);
             return;
           }
 
-          const id = row.getAttribute('data-track-id');
-          const rawContainer = document.getElementById('album-raw-tracks');
+          const id = row.getAttribute("data-track-id");
+          const rawContainer = document.getElementById("album-raw-tracks");
           if (rawContainer) {
-            const albumTracks = JSON.parse(rawContainer.getAttribute('data-tracks') || '[]');
+            const albumTracks = JSON.parse(
+              rawContainer.getAttribute("data-tracks") || "[]",
+            );
             const found = albumTracks.find((t: any) => t.id === id);
             if (found) {
               setQueue(albumTracks);
@@ -601,36 +860,39 @@ const albumSchema = {
 
   function checkAlbumMode() {
     const cur = $currentTrack.get();
-    const topContainer = document.getElementById('album-top-container');
-    const rawContainer = document.getElementById('album-raw-tracks');
+    const topContainer = document.getElementById("album-top-container");
+    const rawContainer = document.getElementById("album-raw-tracks");
     if (!topContainer || !rawContainer) return;
 
-    const albumTracks = JSON.parse(rawContainer.getAttribute('data-tracks') || '[]');
-    const isCurrentInThisAlbum = cur && albumTracks.some((t: any) => t.id === cur.id);
+    const albumTracks = JSON.parse(
+      rawContainer.getAttribute("data-tracks") || "[]",
+    );
+    const isCurrentInThisAlbum =
+      cur && albumTracks.some((t: any) => t.id === cur.id);
 
     if (isCurrentInThisAlbum) {
-      topContainer.classList.remove('mode-presentation');
-      topContainer.classList.add('mode-player');
+      topContainer.classList.remove("mode-presentation");
+      topContainer.classList.add("mode-player");
     } else {
-      topContainer.classList.remove('mode-player');
-      topContainer.classList.add('mode-presentation');
+      topContainer.classList.remove("mode-player");
+      topContainer.classList.add("mode-presentation");
     }
   }
 
   function switchToPlayerMode() {
-    const topContainer = document.getElementById('album-top-container');
+    const topContainer = document.getElementById("album-top-container");
     if (!topContainer) return;
-    topContainer.classList.remove('mode-presentation');
-    topContainer.classList.add('mode-player');
+    topContainer.classList.remove("mode-presentation");
+    topContainer.classList.add("mode-player");
   }
 
   // Subscribe to reactive stores
   $currentTrack.subscribe((track) => {
     checkAlbumMode();
     if (track) {
-      const title = document.getElementById('main-track-title');
-      const artist = document.getElementById('main-artist-name');
-      const category = document.getElementById('main-category-badge');
+      const title = document.getElementById("main-track-title");
+      const artist = document.getElementById("main-artist-name");
+      const category = document.getElementById("main-category-badge");
       if (title) title.textContent = track.title;
       if (artist) artist.textContent = track.artist;
       if (category) category.textContent = track.album.toUpperCase();
@@ -653,8 +915,8 @@ const albumSchema = {
   });
 
   $currentTime.subscribe((time) => {
-    const timeCurrent = document.getElementById('main-time-current');
-    const seekFill = document.getElementById('seek-fill');
+    const timeCurrent = document.getElementById("main-time-current");
+    const seekFill = document.getElementById("seek-fill");
     if (timeCurrent) timeCurrent.textContent = formatTime(time);
     const dur = $duration.get();
     if (dur > 0 && seekFill) {
@@ -663,25 +925,27 @@ const albumSchema = {
   });
 
   $duration.subscribe((dur) => {
-    const timeDuration = document.getElementById('main-time-duration');
+    const timeDuration = document.getElementById("main-time-duration");
     if (timeDuration) timeDuration.textContent = formatTime(dur);
   });
 
   $volume.subscribe((vol) => {
-    const volSlider = document.getElementById('vol-range-main') as HTMLInputElement;
+    const volSlider = document.getElementById(
+      "vol-range-main",
+    ) as HTMLInputElement;
     if (volSlider) volSlider.value = vol.toString();
   });
 
   function triggerNext3D() {
     if (isAnimating) return;
     isAnimating = true;
-    
-    const cards = document.querySelectorAll('.cover-card');
+
+    const cards = document.querySelectorAll(".cover-card");
     cards.forEach((card) => {
-      let currentPos = parseInt(card.getAttribute('data-pos') || '0', 10);
+      let currentPos = parseInt(card.getAttribute("data-pos") || "0", 10);
       let newPos = currentPos - 1;
       if (newPos < -2) newPos = 2;
-      card.setAttribute('data-pos', newPos.toString());
+      card.setAttribute("data-pos", newPos.toString());
     });
 
     setTimeout(() => {
@@ -693,13 +957,13 @@ const albumSchema = {
   function triggerPrev3D() {
     if (isAnimating) return;
     isAnimating = true;
-    
-    const cards = document.querySelectorAll('.cover-card');
+
+    const cards = document.querySelectorAll(".cover-card");
     cards.forEach((card) => {
-      let currentPos = parseInt(card.getAttribute('data-pos') || '0', 10);
+      let currentPos = parseInt(card.getAttribute("data-pos") || "0", 10);
       let newPos = currentPos + 1;
       if (newPos > 2) newPos = -2;
-      card.setAttribute('data-pos', newPos.toString());
+      card.setAttribute("data-pos", newPos.toString());
     });
 
     setTimeout(() => {
@@ -711,28 +975,35 @@ const albumSchema = {
   function update5CardCarouselStage(currentTrack: any) {
     const queue = $queue.get();
     if (!queue || queue.length === 0) return;
-    const currentIndex = queue.findIndex(t => t.id === currentTrack.id);
+    const currentIndex = queue.findIndex((t) => t.id === currentTrack.id);
     if (currentIndex === -1) return;
 
-    const cards = document.querySelectorAll('.cover-card');
+    const cards = document.querySelectorAll(".cover-card");
 
     cards.forEach((card) => {
-      const pos = parseInt(card.getAttribute('data-pos') || '0', 10);
-      const targetIndex = (currentIndex + pos + queue.length * 100) % queue.length;
+      const pos = parseInt(card.getAttribute("data-pos") || "0", 10);
+      const targetIndex =
+        (currentIndex + pos + queue.length * 100) % queue.length;
       const targetTrack = queue[targetIndex];
-      const img = card.querySelector('img') as HTMLImageElement;
+      const img = card.querySelector("img") as HTMLImageElement;
 
       if (img && targetTrack) {
         if (img.src !== targetTrack.cover) {
           img.src = targetTrack.cover;
         }
 
-        extractAudioMetadata(targetTrack.audioUrl).then(meta => {
+        extractAudioMetadata(targetTrack.audioUrl).then((meta) => {
           if (meta.coverUrl) {
             targetTrack.cover = meta.coverUrl;
-            const latestIndex = queue.findIndex(t => t.id === $currentTrack.get()?.id);
-            const latestPos = parseInt(card.getAttribute('data-pos') || '0', 10);
-            const expectedIndex = (latestIndex + latestPos + queue.length * 100) % queue.length;
+            const latestIndex = queue.findIndex(
+              (t) => t.id === $currentTrack.get()?.id,
+            );
+            const latestPos = parseInt(
+              card.getAttribute("data-pos") || "0",
+              10,
+            );
+            const expectedIndex =
+              (latestIndex + latestPos + queue.length * 100) % queue.length;
             if (expectedIndex === targetIndex) {
               img.src = meta.coverUrl;
             }
@@ -743,20 +1014,20 @@ const albumSchema = {
   }
 
   function highlightActivePlaylistItem(trackId: string) {
-    const btns = document.querySelectorAll('.playlist-track-row');
-    btns.forEach(btn => {
-      if (btn.getAttribute('data-track-id') === trackId) {
-        btn.classList.add('active-track');
+    const btns = document.querySelectorAll(".playlist-track-row");
+    btns.forEach((btn) => {
+      if (btn.getAttribute("data-track-id") === trackId) {
+        btn.classList.add("active-track");
       } else {
-        btn.classList.remove('active-track');
+        btn.classList.remove("active-track");
       }
     });
   }
 
   async function extractPlaylistID3Covers() {
-    const thumbs = document.querySelectorAll('.playlist-thumb[data-audio-url]');
+    const thumbs = document.querySelectorAll(".playlist-thumb[data-audio-url]");
     thumbs.forEach(async (thumb) => {
-      const audioUrl = thumb.getAttribute('data-audio-url');
+      const audioUrl = thumb.getAttribute("data-audio-url");
       if (audioUrl) {
         const meta = await extractAudioMetadata(audioUrl);
         if (meta.coverUrl) {
@@ -771,9 +1042,9 @@ const albumSchema = {
     try {
       if (navigator.share) {
         await navigator.share({
-          title: 'Rakun.io',
-          text: 'Escucha este tema en Rakun.io',
-          url: shareUrl
+          title: "Rakun.io",
+          text: "Escucha este tema en Rakun.io",
+          url: shareUrl,
         });
       } else {
         await navigator.clipboard.writeText(shareUrl);
@@ -784,13 +1055,13 @@ const albumSchema = {
   }
 
   function formatTime(sec: number): string {
-    if (isNaN(sec) || sec <= 0) return '0:00';
+    if (isNaN(sec) || sec <= 0) return "0:00";
     const m = Math.floor(sec / 60);
     const s = Math.floor(sec % 60);
-    return `${m}:${s < 10 ? '0' : ''}${s}`;
+    return `${m}:${s < 10 ? "0" : ""}${s}`;
   }
 
-  document.addEventListener('astro:page-load', () => initAlbumPlayer());
+  document.addEventListener("astro:page-load", () => initAlbumPlayer());
 </script>
 
 <style>
@@ -834,7 +1105,11 @@ const albumSchema = {
     position: absolute;
     inset: -10px;
     border-radius: 40px;
-    background: radial-gradient(circle, rgba(217, 136, 69, 0.28) 0%, rgba(244, 239, 232, 0) 70%);
+    background: radial-gradient(
+      circle,
+      rgba(217, 136, 69, 0.28) 0%,
+      rgba(244, 239, 232, 0) 70%
+    );
     filter: blur(28px);
     z-index: 0;
   }
@@ -851,7 +1126,10 @@ const albumSchema = {
 
   .cover-card {
     position: absolute;
-    transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.4s ease, filter 0.4s ease;
+    transition:
+      transform 0.4s cubic-bezier(0.25, 1, 0.5, 1),
+      opacity 0.4s ease,
+      filter 0.4s ease;
     border-radius: 24px;
     overflow: hidden;
     cursor: pointer;
@@ -985,7 +1263,9 @@ const albumSchema = {
     opacity: 0;
     pointer-events: none;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-    transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+    transition:
+      opacity 0.3s ease,
+      transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);
   }
 
   .mobile-lyrics-overlay.active {
@@ -994,7 +1274,8 @@ const albumSchema = {
     transform: translate(-50%, -50%) scale(1);
   }
 
-  .album-aura-container:has(.mobile-lyrics-overlay.active) .mobile-lyrics-toggle-btn {
+  .album-aura-container:has(.mobile-lyrics-overlay.active)
+    .mobile-lyrics-toggle-btn {
     opacity: 0 !important;
     pointer-events: none !important;
   }
@@ -1135,7 +1416,7 @@ const albumSchema = {
   }
 
   .icon-btn.active-one::after {
-    content: '1';
+    content: "1";
     position: absolute;
     top: 2px;
     right: 2px;
@@ -1234,7 +1515,8 @@ const albumSchema = {
     gap: 8px;
   }
 
-  .action-btn, .like-btn {
+  .action-btn,
+  .like-btn {
     background: rgba(255, 255, 255, 0.7);
     border: 1px solid var(--glass-border-dark);
     color: var(--text-dim);
@@ -1247,13 +1529,15 @@ const albumSchema = {
     transition: var(--transition-smooth);
   }
 
-  .action-btn:hover, .like-btn:hover {
+  .action-btn:hover,
+  .like-btn:hover {
     color: var(--accent-warm);
     background: white;
     transform: scale(1.05);
   }
 
-  .action-icon, .like-icon {
+  .action-icon,
+  .like-icon {
     width: 18px;
     height: 18px;
   }
@@ -1320,7 +1604,7 @@ const albumSchema = {
 
   .playlist-toggle-btn:hover {
     background: white;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   }
 
   .toggle-icon {
@@ -1335,7 +1619,9 @@ const albumSchema = {
     gap: 8px;
     max-height: 420px;
     overflow-y: auto;
-    transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+    transition:
+      max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+      opacity 0.3s ease;
     opacity: 1;
     padding-right: 4px;
   }
@@ -1363,7 +1649,7 @@ const albumSchema = {
 
   .playlist-track-row:hover {
     background: white;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.05);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
     transform: translateY(-1px);
   }
 
@@ -1577,17 +1863,20 @@ const albumSchema = {
   }
 
   #album-top-container {
-    transition: opacity 0.35s cubic-bezier(0.25, 1, 0.5, 1), transform 0.35s cubic-bezier(0.25, 1, 0.5, 1);
+    transition:
+      opacity 0.35s cubic-bezier(0.25, 1, 0.5, 1),
+      transform 0.35s cubic-bezier(0.25, 1, 0.5, 1);
   }
 
   #player-left-presentation,
   #player-left-player {
     grid-column: 1;
     grid-row: 1;
-    transition: opacity 0.48s cubic-bezier(0.16, 1, 0.3, 1),
-                transform 0.48s cubic-bezier(0.16, 1, 0.3, 1),
-                filter 0.48s cubic-bezier(0.16, 1, 0.3, 1),
-                visibility 0.48s cubic-bezier(0.16, 1, 0.3, 1);
+    transition:
+      opacity 0.48s cubic-bezier(0.16, 1, 0.3, 1),
+      transform 0.48s cubic-bezier(0.16, 1, 0.3, 1),
+      filter 0.48s cubic-bezier(0.16, 1, 0.3, 1),
+      visibility 0.48s cubic-bezier(0.16, 1, 0.3, 1);
     will-change: opacity, transform, filter;
   }
 
@@ -1595,10 +1884,11 @@ const albumSchema = {
   #player-right-player {
     grid-column: 2;
     grid-row: 1;
-    transition: opacity 0.48s cubic-bezier(0.16, 1, 0.3, 1),
-                transform 0.48s cubic-bezier(0.16, 1, 0.3, 1),
-                filter 0.48s cubic-bezier(0.16, 1, 0.3, 1),
-                visibility 0.48s cubic-bezier(0.16, 1, 0.3, 1);
+    transition:
+      opacity 0.48s cubic-bezier(0.16, 1, 0.3, 1),
+      transform 0.48s cubic-bezier(0.16, 1, 0.3, 1),
+      filter 0.48s cubic-bezier(0.16, 1, 0.3, 1),
+      visibility 0.48s cubic-bezier(0.16, 1, 0.3, 1);
     will-change: opacity, transform, filter;
   }
 
@@ -1609,6 +1899,11 @@ const albumSchema = {
     filter: blur(0px);
     pointer-events: auto;
     visibility: visible;
+  }
+
+  .mode-player .album-description-box,
+  .mode-player .album-play-hero-btn {
+    display: none;
   }
 
   .mode-presentation .player-view {
