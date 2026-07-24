@@ -549,7 +549,15 @@ const defaultTrack: Track = TRACKS[0] || fallbackTrack;
     const category = document.getElementById("main-category-badge");
     const seekBar = document.getElementById("seek-bar");
 
-    playBtn?.addEventListener("click", () => togglePlay());
+    playBtn?.addEventListener("click", () => {
+      const cur = $currentTrack.get();
+      if (!cur && TRACKS[0]) {
+        setQueue(TRACKS);
+        playTrack(TRACKS[0], true);
+        return;
+      }
+      togglePlay();
+    });
     btnNext?.addEventListener("click", () => triggerNext3D());
     btnPrev?.addEventListener("click", () => triggerPrev3D());
     btnShuffle?.addEventListener("click", () => toggleShuffle());
@@ -600,6 +608,12 @@ const defaultTrack: Track = TRACKS[0] || fallbackTrack;
       } else if (pos === "-1") {
         triggerPrev3D();
       } else if (pos === "0") {
+        const cur = $currentTrack.get();
+        if (!cur && TRACKS[0]) {
+          setQueue(TRACKS);
+          playTrack(TRACKS[0], true);
+          return;
+        }
         togglePlay();
       }
     });

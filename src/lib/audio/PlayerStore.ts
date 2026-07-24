@@ -5,10 +5,10 @@ import { TRACKS } from '../../data/tracks';
 export type VisualizerMode = 'bars' | 'waveform' | 'radial';
 export type RepeatMode = 'none' | 'all' | 'one';
 
-export const $currentTrack = atom<Track | null>(TRACKS[0] || null);
+export const $currentTrack = atom<Track | null>(null);
 export const $isPlaying = atom<boolean>(false);
 export const $currentTime = atom<number>(0);
-export const $duration = atom<number>(TRACKS[0]?.duration || 150);
+export const $duration = atom<number>(150);
 export const $volume = atom<number>(0.8);
 export const $isMuted = atom<boolean>(false);
 export const $queue = atom<Track[]>(TRACKS);

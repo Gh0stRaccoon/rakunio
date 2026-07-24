@@ -344,10 +344,8 @@ const albumSchema = {
         const albumTracks = JSON.parse(rawContainer.getAttribute('data-tracks') || '[]');
         if (albumTracks.length > 0) {
           const current = $currentTrack.get();
-          // If no track is active, set default to first album track without autoplaying
           if (!current) {
             setQueue(albumTracks);
-            $currentTrack.set(albumTracks[0]);
           }
         }
       } catch (e) {}
