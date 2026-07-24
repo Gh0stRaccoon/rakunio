@@ -26,6 +26,7 @@ class AudioEngineSingleton {
 
     this.audio = new Audio();
     this.audio.crossOrigin = 'anonymous';
+    this.audio.preload = 'metadata';
 
     const initialTrack = $currentTrack.get();
     if (initialTrack) {
