@@ -499,6 +499,18 @@ const albumSchema = {
       if (category) category.textContent = cur.album.toUpperCase();
       update5CardCarouselStage(cur);
       highlightActivePlaylistItem(cur.id);
+    } else {
+      const rawContainer = document.getElementById('album-raw-tracks');
+      if (rawContainer) {
+        const albumTracks = JSON.parse(rawContainer.getAttribute('data-tracks') || '[]');
+        if (albumTracks[0]) {
+          if (title) title.textContent = albumTracks[0].title;
+          if (artist) artist.textContent = albumTracks[0].artist;
+          if (category) category.textContent = albumTracks[0].album.toUpperCase();
+          update5CardCarouselStage(albumTracks[0]);
+        }
+      }
+      highlightActivePlaylistItem('');
     }
   }
 
@@ -591,34 +603,38 @@ const albumSchema = {
     }, 380);
   }
 
-  function update5CardCarouselStage(currentTrack: any) {
+  function update5CardCarouselStage(targetTrack: any) {
+    const rawContainer = document.getElementById('album-raw-tracks');
+    let localTracks: any[] = [];
+    if (rawContainer) {
+      localTracks = JSON.parse(rawContainer.getAttribute('data-tracks') || '[]');
+    }
+
+    const currentAlbumId = rawContainer?.getAttribute('data-album-id');
     const queue = $queue.get();
-    if (!queue || queue.length === 0) return;
-    const currentIndex = queue.findIndex(t => t.id === currentTrack.id);
-    if (currentIndex === -1) return;
+    const trackList = (targetTrack?.albumId === currentAlbumId && queue.length > 0) ? queue : localTracks;
+
+    if (!trackList || trackList.length === 0) return;
+    const currentIndex = trackList.findIndex(t => t.id === targetTrack?.id);
+    const activeIdx = currentIndex !== -1 ? currentIndex : 0;
 
     const cards = document.querySelectorAll('.cover-card');
 
     cards.forEach((card) => {
       const pos = parseInt(card.getAttribute('data-pos') || '0', 10);
-      const targetIndex = (currentIndex + pos + queue.length * 100) % queue.length;
-      const targetTrack = queue[targetIndex];
+      const targetIndex = (activeIdx + pos + trackList.length * 100) % trackList.length;
+      const track = trackList[targetIndex];
       const img = card.querySelector('img') as HTMLImageElement;
 
-      if (img && targetTrack) {
-        if (img.src !== targetTrack.cover) {
-          img.src = targetTrack.cover;
+      if (img && track) {
+        if (img.src !== track.cover) {
+          img.src = track.cover;
         }
 
-        extractAudioMetadata(targetTrack.audioUrl).then(meta => {
+        extractAudioMetadata(track.audioUrl).then(meta => {
           if (meta.coverUrl) {
-            targetTrack.cover = meta.coverUrl;
-            const latestIndex = queue.findIndex(t => t.id === $currentTrack.get()?.id);
-            const latestPos = parseInt(card.getAttribute('data-pos') || '0', 10);
-            const expectedIndex = (latestIndex + latestPos + queue.length * 100) % queue.length;
-            if (expectedIndex === targetIndex) {
-              img.src = meta.coverUrl;
-            }
+            track.cover = meta.coverUrl;
+            img.src = meta.coverUrl;
           }
         });
       }
