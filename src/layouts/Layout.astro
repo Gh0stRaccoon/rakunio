@@ -30,7 +30,7 @@ const currentPath = Astro.url.pathname;
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" type="image/svg+xml" href={withBase('/favicon.svg')} />
+    <link rel="icon" type="image/jpeg" href={withBase('/rakunio_logo.jpeg')} />
     <link rel="canonical" href={canonicalURL} />
     <meta name="generator" content={Astro.generator} />
 
@@ -39,7 +39,7 @@ const currentPath = Astro.url.pathname;
     <meta name="robots" content="index, follow" />
 
     <!-- OpenGraph Tags -->
-    <meta property="og:site_name" content="Racoon Music" />
+    <meta property="og:site_name" content="Rakun.io" />
     <meta property="og:type" content={type} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
@@ -56,11 +56,8 @@ const currentPath = Astro.url.pathname;
     <!-- Mobile Top Header Bar (only visible on mobile <= 960px) -->
     <header class="mobile-top-bar glass-panel">
       <a href={withBase('/album/rakunio')} class="mobile-brand">
-        <svg class="brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 14a4 4 0 1 1 4-4 4 4 0 0 1-4 4z"/>
-          <circle cx="12" cy="12" r="2"/>
-        </svg>
-        <span class="brand-title">RACOON <small>music beats</small></span>
+        <img src={withBase('/rakunio_logo.jpeg')} alt="Rakun.io" class="brand-logo-img" />
+        <span class="brand-title">Rakun.io <small>music beats</small></span>
       </a>
 
       <button id="mobile-menu-toggle" class="mobile-menu-btn" aria-label="Abrir menú de navegación">
@@ -80,12 +77,9 @@ const currentPath = Astro.url.pathname;
       <aside id="sidebar-drawer" class="sidebar glass-panel">
         <div class="sidebar-header-mobile">
           <div class="sidebar-brand">
-            <svg class="brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 14a4 4 0 1 1 4-4 4 4 0 0 1-4 4z"/>
-              <circle cx="12" cy="12" r="2"/>
-            </svg>
+            <img src={withBase('/rakunio_logo.jpeg')} alt="Rakun.io" class="brand-logo-img" />
             <div class="brand-text-group">
-              <span class="brand-title">RACOON</span>
+              <span class="brand-title">Rakun.io</span>
               <span class="brand-sub">music beats</span>
             </div>
           </div>
@@ -195,8 +189,17 @@ const currentPath = Astro.url.pathname;
   .mobile-brand {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
     text-decoration: none;
+  }
+
+  .brand-logo-img {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
+    border: 1px solid var(--glass-border-dark);
   }
 
   .mobile-brand .brand-title {

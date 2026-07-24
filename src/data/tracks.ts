@@ -118,7 +118,7 @@ function scanMusicGlob(): { tracks: Track[]; albums: Album[] } {
       artist: artistName,
       album: albumTitle,
       albumId,
-      cover: withBase('/favicon.svg'),
+      cover: withBase('/rakunio_logo.jpeg'),
       audioUrl,
       duration: 150,
       externalLinks,
@@ -129,7 +129,7 @@ function scanMusicGlob(): { tracks: Track[]; albums: Album[] } {
 
     if (!albumsMap.has(albumId)) {
       // Find matching folder cover image
-      let albumCover = withBase('/favicon.svg');
+      let albumCover = withBase('/rakunio_logo.jpeg');
       for (const cPath in coverModules) {
         if (cPath.includes(`/music/${folder}/`)) {
           const rawCoverUrl = coverModules[cPath];

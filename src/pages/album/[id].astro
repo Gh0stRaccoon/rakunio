@@ -22,7 +22,7 @@ const fallbackTrack: Track = {
   album: 'rakunio',
   albumId: 'rakunio',
   duration: 150,
-  cover: withBase('/favicon.svg'),
+  cover: withBase('/rakunio_logo.jpeg'),
   audioUrl: ''
 };
 
@@ -771,8 +771,8 @@ const albumSchema = {
     try {
       if (navigator.share) {
         await navigator.share({
-          title: 'Racoon Music',
-          text: 'Escucha este tema en Racoon Music',
+          title: 'Rakun.io',
+          text: 'Escucha este tema en Rakun.io',
           url: shareUrl
         });
       } else {
