@@ -658,7 +658,7 @@ const defaultTrack: Track = TRACKS[0] || fallbackTrack;
     updateRepeatIconUI($repeatMode.get());
 
     const cur = $currentTrack.get();
-    if (cur && cur.albumId === 'rakunio') {
+    if (cur) {
       if (title) title.textContent = cur.title;
       if (artist) artist.textContent = cur.artist;
       if (category) category.textContent = cur.album.toUpperCase();
@@ -669,7 +669,7 @@ const defaultTrack: Track = TRACKS[0] || fallbackTrack;
 
   // Subscribe to reactive stores
   $currentTrack.subscribe((track) => {
-    if (track && track.albumId === 'rakunio') {
+    if (track) {
       const title = document.getElementById("main-track-title");
       const artist = document.getElementById("main-artist-name");
       const category = document.getElementById("main-category-badge");
