@@ -57,7 +57,7 @@ const totalMins = Math.round(totalSecs / 60);
   jsonLd={albumSchema}
 >
   <!-- Main Racoon Player Workspace Shell -->
-  <div class="player-main-workspace glass-panel album-view-container" id="album-workspace">
+  <div class="player-main-workspace glass-panel">
     
     <!-- MODE 1: ALBUM HERO SHOWCASE -->
     <div class="album-hero-top" id="album-hero-section">
@@ -130,15 +130,14 @@ const totalMins = Math.round(totalSecs / 60);
       </div>
     </div>
 
-    <!-- MODE 2: ACTIVE 3D PLAYER STAGE (Revealed on Play) -->
+    <!-- MODE 2: EXACT ORIGINAL 3D PLAYER LAYOUT (Revealed on Play) -->
     <div class="player-top-row hidden" id="album-player-section">
       <!-- Left Column: 5-Card Continuous 3D CoverFlow Stage + Visualizer + Controls -->
       <div class="player-left-col">
-        <div class="album-aura-container">
-          <div class="aura-glow"></div>
-          
+        <div class="stage-carousel-container">
           <!-- Continuous 5-Card 3D Cover Stage -->
           <div class="cover-stage" id="cover-stage">
+            <!-- 5 Persistent Cards mapped dynamically by data-pos -->
             <div class="cover-card" data-card-slot="0" data-pos="-2">
               <img id="card-img-0" src={defaultTrack.cover} alt="Cover" class="card-img" />
             </div>
@@ -169,10 +168,12 @@ const totalMins = Math.round(totalSecs / 60);
               <img id="card-img-4" src={defaultTrack.cover} alt="Cover" class="card-img" />
             </div>
 
+            <!-- Free Spectrum Visualizer Overlay Centered Vertically Over Active Cover Card -->
             <div class="cover-visualizer-overlay" id="cover-visualizer-overlay">
               <CanvasVisualizer />
             </div>
 
+            <!-- Fixed Center Active Mobile Lyrics Backdrop Overlay (Mobile Only) -->
             <div class="mobile-lyrics-overlay" id="mobile-lyrics-overlay">
               <div class="overlay-header">
                 <span class="overlay-title">Letra</span>
@@ -184,6 +185,7 @@ const totalMins = Math.round(totalSecs / 60);
             </div>
           </div>
 
+          <!-- Mobile Lyrics Toggle Floating Action Button (Mobile Only) -->
           <button id="btn-toggle-lyrics-overlay" class="mobile-lyrics-toggle-btn" title="Ver letra sobre carátula">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="lyrics-toggle-icon">
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
@@ -194,6 +196,7 @@ const totalMins = Math.round(totalSecs / 60);
           </button>
         </div>
 
+        <!-- Progress & Seek Bar -->
         <div class="progress-section">
           <span id="main-time-current" class="time-stamp">0:00</span>
           <div class="seek-bar-track" id="seek-bar">
@@ -202,6 +205,7 @@ const totalMins = Math.round(totalSecs / 60);
           <span id="main-time-duration" class="time-stamp">2:25</span>
         </div>
 
+        <!-- Control Action Buttons -->
         <div class="controls-row">
           <button id="btn-shuffle" class="icon-btn" title="Modo Aleatorio">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon">
@@ -246,6 +250,7 @@ const totalMins = Math.round(totalSecs / 60);
           </button>
         </div>
 
+        <!-- Volume Bar -->
         <div class="volume-row">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="vol-icon">
             <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="currentColor"/>
@@ -254,6 +259,7 @@ const totalMins = Math.round(totalSecs / 60);
         </div>
       </div>
 
+      <!-- Right Column: Track Info + Synced Lyrics (Desktop) -->
       <div class="player-right-col">
         <div class="track-header-meta">
           <span id="main-category-badge" class="category-badge">{album.title.toUpperCase()}</span>
@@ -281,6 +287,7 @@ const totalMins = Math.round(totalSecs / 60);
           <span id="main-artist-name" class="artist-name">{defaultTrack.artist}</span>
         </div>
 
+        <!-- Synced Lyrics Component (Desktop Column) -->
         <div class="lyrics-wrapper-desktop">
           <LrcLyrics />
         </div>
@@ -341,7 +348,9 @@ const totalMins = Math.round(totalSecs / 60);
     $isPlaying,
     $currentTime,
     $duration,
+    $volume,
     $isShuffle,
+    $repeatMode,
     playTrack,
     setQueue,
     togglePlay,
@@ -381,6 +390,7 @@ const totalMins = Math.round(totalSecs / 60);
     const btnPrev = document.getElementById('btn-prev-main');
     const btnShuffle = document.getElementById('btn-shuffle');
     const btnRepeat = document.getElementById('btn-repeat');
+    const coverStage = document.getElementById('cover-stage');
     const volSlider = document.getElementById('vol-range-main') as HTMLInputElement;
 
     const btnToggleLyricsOverlay = document.getElementById('btn-toggle-lyrics-overlay');
@@ -417,6 +427,29 @@ const totalMins = Math.round(totalSecs / 60);
       }
     };
 
+    const updateShuffleIconUI = (isShuffle: boolean) => {
+      const btnShuffle = document.getElementById('btn-shuffle');
+      if (btnShuffle) {
+        if (isShuffle) {
+          btnShuffle.classList.add('active');
+        } else {
+          btnShuffle.classList.remove('active');
+        }
+      }
+    };
+
+    const updateRepeatIconUI = (mode: string) => {
+      const btnRepeat = document.getElementById('btn-repeat');
+      if (btnRepeat) {
+        btnRepeat.classList.remove('active', 'active-one');
+        if (mode === 'all') {
+          btnRepeat.classList.add('active');
+        } else if (mode === 'one') {
+          btnRepeat.classList.add('active', 'active-one');
+        }
+      }
+    };
+
     const update5CardCarouselStage = (activeTrack: any) => {
       const idx = albumTracks.findIndex((t: any) => t.id === activeTrack.id);
       if (idx === -1) return;
@@ -441,6 +474,26 @@ const totalMins = Math.round(totalSecs / 60);
       });
     };
 
+    const triggerNext3D = () => {
+      const queue = albumTracks;
+      const cur = $currentTrack.get();
+      if (cur) {
+        const idx = queue.findIndex((t: any) => t.id === cur.id);
+        const next = queue[(idx + 1) % queue.length];
+        if (next) playTrack(next, true);
+      }
+    };
+
+    const triggerPrev3D = () => {
+      const queue = albumTracks;
+      const cur = $currentTrack.get();
+      if (cur) {
+        const idx = queue.findIndex((t: any) => t.id === cur.id);
+        const prev = queue[(idx - 1 + queue.length) % queue.length];
+        if (prev) playTrack(prev, true);
+      }
+    };
+
     const handlePlayAlbum = (shuffle: boolean = false) => {
       if (albumTracks.length === 0) return;
       setQueue(albumTracks);
@@ -459,26 +512,8 @@ const totalMins = Math.round(totalSecs / 60);
     btnHeroShuffle?.addEventListener('click', () => handlePlayAlbum(true));
 
     playBtn?.addEventListener('click', () => togglePlay());
-    btnNext?.addEventListener('click', () => {
-      const queue = albumTracks;
-      const cur = $currentTrack.get();
-      if (cur) {
-        const idx = queue.findIndex((t: any) => t.id === cur.id);
-        const next = queue[(idx + 1) % queue.length];
-        if (next) playTrack(next, true);
-      }
-    });
-
-    btnPrev?.addEventListener('click', () => {
-      const queue = albumTracks;
-      const cur = $currentTrack.get();
-      if (cur) {
-        const idx = queue.findIndex((t: any) => t.id === cur.id);
-        const prev = queue[(idx - 1 + queue.length) % queue.length];
-        if (prev) playTrack(prev, true);
-      }
-    });
-
+    btnNext?.addEventListener('click', () => triggerNext3D());
+    btnPrev?.addEventListener('click', () => triggerPrev3D());
     btnShuffle?.addEventListener('click', () => toggleShuffle());
     btnRepeat?.addEventListener('click', () => cycleRepeatMode());
 
@@ -492,6 +527,21 @@ const totalMins = Math.round(totalSecs / 60);
       const dur = $duration.get();
       if (dur > 0) {
         AudioEngine.seek(pct * dur);
+      }
+    });
+
+    coverStage?.addEventListener('click', (e) => {
+      if ((e.target as HTMLElement).closest('#mobile-lyrics-overlay')) return;
+
+      const card = (e.target as HTMLElement).closest('.cover-card');
+      if (!card) return;
+      const pos = card.getAttribute('data-pos');
+      if (pos === '1') {
+        triggerNext3D();
+      } else if (pos === '-1') {
+        triggerPrev3D();
+      } else if (pos === '0') {
+        togglePlay();
       }
     });
 
@@ -572,6 +622,14 @@ const totalMins = Math.round(totalSecs / 60);
       updatePlayIconUI(playing);
     });
 
+    $isShuffle.subscribe((isShuffle: boolean) => {
+      updateShuffleIconUI(isShuffle);
+    });
+
+    $repeatMode.subscribe((mode: string) => {
+      updateRepeatIconUI(mode);
+    });
+
     $currentTime.subscribe((time) => {
       const timeCurrent = document.getElementById('main-time-current');
       const seekFill = document.getElementById('seek-fill');
@@ -585,6 +643,11 @@ const totalMins = Math.round(totalSecs / 60);
     $duration.subscribe((dur) => {
       const timeDuration = document.getElementById('main-time-duration');
       if (timeDuration) timeDuration.textContent = formatTime(dur);
+    });
+
+    $volume.subscribe((vol) => {
+      const volSlider = document.getElementById('vol-range-main') as HTMLInputElement;
+      if (volSlider) volSlider.value = vol.toString();
     });
 
     const current = $currentTrack.get();
@@ -609,13 +672,14 @@ const totalMins = Math.round(totalSecs / 60);
 </script>
 
 <style>
-  .album-view-container {
+  .player-main-workspace {
     display: flex;
     flex-direction: column;
     gap: 32px;
     padding: 32px;
   }
 
+  /* Album Hero Top Section */
   .album-hero-top {
     display: grid;
     grid-template-columns: 280px 1fr;
@@ -731,19 +795,6 @@ const totalMins = Math.round(totalSecs / 60);
     display: flex;
     align-items: center;
     gap: 10px;
-  }
-
-  .category-badge {
-    display: inline-flex;
-    align-items: center;
-    padding: 4px 12px;
-    background: rgba(181, 105, 56, 0.15);
-    color: var(--accent-warm);
-    border-radius: var(--radius-full);
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
   }
 
   .album-year-badge {
@@ -877,28 +928,29 @@ const totalMins = Math.round(totalSecs / 60);
     height: 18px;
   }
 
-  /* Player top row styling */
+  /* 1:1 Original Player Top Row Layout */
   .player-top-row {
     display: grid;
-    grid-template-columns: 290px 1fr;
-    gap: 32px;
+    grid-template-columns: 340px 1fr;
+    gap: 40px;
     align-items: start;
   }
 
   .player-left-col {
     display: flex;
     flex-direction: column;
-    gap: 16px;
     align-items: center;
     width: 100%;
   }
 
-  .album-aura-container {
+  .stage-carousel-container {
     position: relative;
     width: 100%;
+    height: 320px;
     display: flex;
     justify-content: center;
     align-items: center;
+    overflow: visible;
   }
 
   .cover-stage {
@@ -933,7 +985,7 @@ const totalMins = Math.round(totalSecs / 60);
     width: 170px;
     height: 170px;
     z-index: 10;
-    transform: translateX(180px) scale(0.82) rotateY(-18deg);
+    transform: translateX(190px) scale(0.82) rotateY(-18deg);
     opacity: 0.55;
   }
 
@@ -941,7 +993,7 @@ const totalMins = Math.round(totalSecs / 60);
     width: 170px;
     height: 170px;
     z-index: 10;
-    transform: translateX(-180px) scale(0.82) rotateY(18deg);
+    transform: translateX(-190px) scale(0.82) rotateY(18deg);
     opacity: 0.55;
   }
 
@@ -1046,39 +1098,42 @@ const totalMins = Math.round(totalSecs / 60);
   .progress-section {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 14px;
     width: 100%;
+    margin-top: 12px;
   }
 
   .time-stamp {
     font-family: var(--font-mono);
-    font-size: 0.78rem;
+    font-size: 0.8rem;
     color: var(--text-dim);
-    width: 34px;
+    min-width: 36px;
   }
 
   .seek-bar-track {
     flex: 1;
-    height: 6px;
-    background: rgba(0, 0, 0, 0.08);
-    border-radius: var(--radius-full);
-    overflow: hidden;
+    height: 5px;
+    background: rgba(181, 105, 56, 0.15);
+    border-radius: 3px;
     cursor: pointer;
     position: relative;
+    overflow: hidden;
   }
 
   .seek-bar-fill {
     height: 100%;
-    background: var(--accent-warm);
-    border-radius: var(--radius-full);
     width: 0%;
-    transition: width 0.1s linear;
+    background: var(--accent-warm);
+    border-radius: 3px;
   }
 
   .controls-row {
     display: flex;
     align-items: center;
-    gap: 20px;
+    justify-content: center;
+    gap: 24px;
+    margin-top: 20px;
+    width: 100%;
   }
 
   .icon-btn {
@@ -1087,19 +1142,29 @@ const totalMins = Math.round(totalSecs / 60);
     color: var(--text-muted);
     cursor: pointer;
     padding: 8px;
-    border-radius: 50%;
+    transition: var(--transition-smooth);
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: var(--transition-smooth);
+    position: relative;
   }
 
   .icon-btn:hover {
     color: var(--text-main);
-    background: rgba(0, 0, 0, 0.05);
   }
 
   .icon-btn.active {
+    color: var(--accent-warm);
+    transform: scale(1.1);
+  }
+
+  .icon-btn.active-one::after {
+    content: "1";
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    font-size: 0.65rem;
+    font-weight: 800;
     color: var(--accent-warm);
   }
 
@@ -1112,20 +1177,20 @@ const totalMins = Math.round(totalSecs / 60);
     width: 56px;
     height: 56px;
     border-radius: 50%;
-    background: var(--text-main);
+    background: var(--accent-dark);
     color: white;
     border: none;
-    cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
-    transition: var(--transition-smooth);
+    cursor: pointer;
+    box-shadow: var(--shadow-btn);
+    transition: var(--transition-bounce);
   }
 
   .main-play-btn:hover {
     transform: scale(1.06);
-    background: var(--accent-warm);
+    background: #000000;
   }
 
   .main-play-icon {
@@ -1136,8 +1201,9 @@ const totalMins = Math.round(totalSecs / 60);
   .volume-row {
     display: flex;
     align-items: center;
-    gap: 10px;
-    width: 80%;
+    gap: 12px;
+    margin-top: 16px;
+    width: 60%;
   }
 
   .vol-icon {
@@ -1164,6 +1230,14 @@ const totalMins = Math.round(totalSecs / 60);
     display: flex;
     flex-direction: column;
     gap: 4px;
+  }
+
+  .category-badge {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--accent-warm);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
   }
 
   .title-like-row {
@@ -1228,6 +1302,7 @@ const totalMins = Math.round(totalSecs / 60);
     flex-direction: column;
     gap: 14px;
     width: 100%;
+    margin-top: 10px;
   }
 
   .playlist-section-header {
@@ -1393,8 +1468,36 @@ const totalMins = Math.round(totalSecs / 60);
     }
   }
 
+  @media (max-width: 640px) {
+    .stage-carousel-container {
+      height: 270px;
+      overflow: visible;
+    }
+
+    .cover-card[data-pos="0"] {
+      width: min(240px, 72vw);
+      height: min(240px, 72vw);
+    }
+
+    .cover-card[data-pos="1"] {
+      display: flex;
+      width: 140px;
+      height: 140px;
+      transform: translateX(125px) scale(0.72) rotateY(-18deg);
+      opacity: 0.5;
+    }
+
+    .cover-card[data-pos="-1"] {
+      display: flex;
+      width: 140px;
+      height: 140px;
+      transform: translateX(-125px) scale(0.72) rotateY(18deg);
+      opacity: 0.5;
+    }
+  }
+
   @media (max-width: 480px) {
-    .album-view-container {
+    .player-main-workspace {
       padding: 16px;
     }
 
@@ -1413,7 +1516,7 @@ const totalMins = Math.round(totalSecs / 60);
       justify-content: center;
     }
 
-    .cover-stage {
+    .stage-carousel-container {
       height: 250px;
       overflow: visible;
     }
