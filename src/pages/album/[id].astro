@@ -264,7 +264,7 @@ const albumSchema = {
     </div>
   </div>
 
-  <div id="album-raw-tracks" data-tracks={JSON.stringify(albumTracks)} data-album-id={album.id} class="hidden"></div>
+  <div id="album-raw-tracks" data-tracks={JSON.stringify(albumTracks)} class="hidden"></div>
 </Layout>
 
 <script>
@@ -371,6 +371,7 @@ const albumSchema = {
 
     playBtn?.addEventListener('click', () => {
       const current = $currentTrack.get();
+      // If current track is not from this album, set queue to this album and play first track
       const rawContainer = document.getElementById('album-raw-tracks');
       if (rawContainer) {
         const albumTracks = JSON.parse(rawContainer.getAttribute('data-tracks') || '[]');
@@ -485,58 +486,67 @@ const albumSchema = {
     extractPlaylistID3Covers();
 
     // Initial sync of current track and button states
-    const cur = $currentTrack.get();
-    const currentAlbumId = document.getElementById('album-raw-tracks')?.getAttribute('data-album-id');
-    const isThisAlbumPlaying = $isPlaying.get() && cur?.albumId === currentAlbumId;
-
-    updatePlayIconUI(isThisAlbumPlaying);
+    updatePlayIconUI($isPlaying.get());
     updateShuffleIconUI($isShuffle.get());
     updateRepeatIconUI($repeatMode.get());
 
-    if (cur && cur.albumId === currentAlbumId) {
-      if (title) title.textContent = cur.title;
-      if (artist) artist.textContent = cur.artist;
-      if (category) category.textContent = cur.album.toUpperCase();
-      update5CardCarouselStage(cur);
-      highlightActivePlaylistItem(cur.id);
-    } else {
+    const cur = $currentTrack.get();
+    if (cur) {
       const rawContainer = document.getElementById('album-raw-tracks');
-      if (rawContainer) {
-        const albumTracks = JSON.parse(rawContainer.getAttribute('data-tracks') || '[]');
-        if (albumTracks[0]) {
-          if (title) title.textContent = albumTracks[0].title;
-          if (artist) artist.textContent = albumTracks[0].artist;
-          if (category) category.textContent = albumTracks[0].album.toUpperCase();
-          update5CardCarouselStage(albumTracks[0]);
+      const albumTracks = rawContainer ? JSON.parse(rawContainer.getAttribute('data-tracks') || '[]') : [];
+      const isCurInAlbum = albumTracks.some((t: any) => t.id === cur.id);
+
+      if (isCurInAlbum) {
+        if (title) title.textContent = cur.title;
+        if (artist) artist.textContent = cur.artist;
+        if (category) category.textContent = cur.album.toUpperCase();
+        update5CardCarouselStage(cur);
+        highlightActivePlaylistItem(cur.id);
+      } else {
+        const firstTrack = albumTracks[0];
+        if (firstTrack) {
+          if (title) title.textContent = firstTrack.title;
+          if (artist) artist.textContent = firstTrack.artist;
+          if (category) category.textContent = firstTrack.album.toUpperCase();
+          update5CardCarouselStage(firstTrack);
         }
+        highlightActivePlaylistItem('');
       }
-      highlightActivePlaylistItem('');
     }
   }
 
   // Subscribe to reactive stores
   $currentTrack.subscribe((track) => {
-    const currentAlbumId = document.getElementById('album-raw-tracks')?.getAttribute('data-album-id');
-    if (track && track.albumId === currentAlbumId) {
+    if (track) {
       const title = document.getElementById('main-track-title');
       const artist = document.getElementById('main-artist-name');
       const category = document.getElementById('main-category-badge');
-      if (title) title.textContent = track.title;
-      if (artist) artist.textContent = track.artist;
-      if (category) category.textContent = track.album.toUpperCase();
+      const rawContainer = document.getElementById('album-raw-tracks');
+      const albumTracks = rawContainer ? JSON.parse(rawContainer.getAttribute('data-tracks') || '[]') : [];
+      const isTrackInAlbum = albumTracks.some((t: any) => t.id === track.id);
 
-      update5CardCarouselStage(track);
-      highlightActivePlaylistItem(track.id);
-    } else {
-      highlightActivePlaylistItem('');
+      if (isTrackInAlbum) {
+        if (title) title.textContent = track.title;
+        if (artist) artist.textContent = track.artist;
+        if (category) category.textContent = track.album.toUpperCase();
+
+        update5CardCarouselStage(track);
+        highlightActivePlaylistItem(track.id);
+      } else {
+        const firstTrack = albumTracks[0];
+        if (firstTrack) {
+          if (title) title.textContent = firstTrack.title;
+          if (artist) artist.textContent = firstTrack.artist;
+          if (category) category.textContent = firstTrack.album.toUpperCase();
+          update5CardCarouselStage(firstTrack);
+        }
+        highlightActivePlaylistItem('');
+      }
     }
   });
 
   $isPlaying.subscribe((playing) => {
-    const currentAlbumId = document.getElementById('album-raw-tracks')?.getAttribute('data-album-id');
-    const cur = $currentTrack.get();
-    const isThisAlbumPlaying = playing && cur?.albumId === currentAlbumId;
-    updatePlayIconUI(isThisAlbumPlaying);
+    updatePlayIconUI(playing);
   });
 
   $isShuffle.subscribe((isShuffle) => {
@@ -603,38 +613,34 @@ const albumSchema = {
     }, 380);
   }
 
-  function update5CardCarouselStage(targetTrack: any) {
-    const rawContainer = document.getElementById('album-raw-tracks');
-    let localTracks: any[] = [];
-    if (rawContainer) {
-      localTracks = JSON.parse(rawContainer.getAttribute('data-tracks') || '[]');
-    }
-
-    const currentAlbumId = rawContainer?.getAttribute('data-album-id');
+  function update5CardCarouselStage(currentTrack: any) {
     const queue = $queue.get();
-    const trackList = (targetTrack?.albumId === currentAlbumId && queue.length > 0) ? queue : localTracks;
-
-    if (!trackList || trackList.length === 0) return;
-    const currentIndex = trackList.findIndex(t => t.id === targetTrack?.id);
-    const activeIdx = currentIndex !== -1 ? currentIndex : 0;
+    if (!queue || queue.length === 0) return;
+    const currentIndex = queue.findIndex(t => t.id === currentTrack.id);
+    if (currentIndex === -1) return;
 
     const cards = document.querySelectorAll('.cover-card');
 
     cards.forEach((card) => {
       const pos = parseInt(card.getAttribute('data-pos') || '0', 10);
-      const targetIndex = (activeIdx + pos + trackList.length * 100) % trackList.length;
-      const track = trackList[targetIndex];
+      const targetIndex = (currentIndex + pos + queue.length * 100) % queue.length;
+      const targetTrack = queue[targetIndex];
       const img = card.querySelector('img') as HTMLImageElement;
 
-      if (img && track) {
-        if (img.src !== track.cover) {
-          img.src = track.cover;
+      if (img && targetTrack) {
+        if (img.src !== targetTrack.cover) {
+          img.src = targetTrack.cover;
         }
 
-        extractAudioMetadata(track.audioUrl).then(meta => {
+        extractAudioMetadata(targetTrack.audioUrl).then(meta => {
           if (meta.coverUrl) {
-            track.cover = meta.coverUrl;
-            img.src = meta.coverUrl;
+            targetTrack.cover = meta.coverUrl;
+            const latestIndex = queue.findIndex(t => t.id === $currentTrack.get()?.id);
+            const latestPos = parseInt(card.getAttribute('data-pos') || '0', 10);
+            const expectedIndex = (latestIndex + latestPos + queue.length * 100) % queue.length;
+            if (expectedIndex === targetIndex) {
+              img.src = meta.coverUrl;
+            }
           }
         });
       }
