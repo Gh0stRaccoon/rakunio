@@ -2,7 +2,7 @@
 import Layout from "../layouts/Layout.astro";
 import CanvasVisualizer from "../components/CanvasVisualizer.astro";
 import LrcLyrics from "../components/LrcLyrics.astro";
-import { TRACKS, ALBUMS } from "../data/tracks";
+import { TRACKS } from "../data/tracks";
 import { withBase } from "../utils/base";
 import type { Track } from "../types/track";
 
@@ -368,19 +368,7 @@ const defaultTrack: Track = TRACKS[0] || fallbackTrack;
           >
         </div>
 
-        <!-- Dynamic Folder Filter Tabs (all / folder names) -->
-        <div class="folder-filter-tabs">
-          <button class="filter-tab active" data-filter-folder="all"
-            >all ({TRACKS.length})</button
-          >
-          {
-            ALBUMS.map((album) => (
-              <button class="filter-tab" data-filter-folder={album.id}>
-                {album.title}
-              </button>
-            ))
-          }
-        </div>
+
 
         <button
           id="btn-toggle-playlist"
@@ -572,23 +560,10 @@ const defaultTrack: Track = TRACKS[0] || fallbackTrack;
       if (current) copyTrackShareLink(current.id);
     });
 
-    // Folder Filter Tabs Handler (all / folder names)
-    const filterTabs = document.querySelectorAll("[data-filter-folder]");
-    filterTabs.forEach((tab) => {
-      tab.addEventListener("click", () => {
-        filterTabs.forEach((t) => t.classList.remove("active"));
-        tab.classList.add("active");
-        const folder = tab.getAttribute("data-filter-folder");
-        filterPlaylistRows(folder || "all", sidebarSearch?.value || "");
-      });
-    });
-
     if (sidebarSearch) {
       sidebarSearch.oninput = (e) => {
         const query = (e.target as HTMLInputElement).value;
-        const activeTab = document.querySelector("[data-filter-folder].active");
-        const folder = activeTab?.getAttribute("data-filter-folder") || "all";
-        filterPlaylistRows(folder, query);
+        filterPlaylistRows("all", query);
       };
     }
 
@@ -683,7 +658,7 @@ const defaultTrack: Track = TRACKS[0] || fallbackTrack;
     updateRepeatIconUI($repeatMode.get());
 
     const cur = $currentTrack.get();
-    if (cur) {
+    if (cur && cur.albumId === 'rakunio') {
       if (title) title.textContent = cur.title;
       if (artist) artist.textContent = cur.artist;
       if (category) category.textContent = cur.album.toUpperCase();
@@ -694,7 +669,7 @@ const defaultTrack: Track = TRACKS[0] || fallbackTrack;
 
   // Subscribe to reactive stores
   $currentTrack.subscribe((track) => {
-    if (track) {
+    if (track && track.albumId === 'rakunio') {
       const title = document.getElementById("main-track-title");
       const artist = document.getElementById("main-artist-name");
       const category = document.getElementById("main-category-badge");

@@ -264,7 +264,7 @@ const albumSchema = {
     </div>
   </div>
 
-  <div id="album-raw-tracks" data-tracks={JSON.stringify(albumTracks)} class="hidden"></div>
+  <div id="album-raw-tracks" data-tracks={JSON.stringify(albumTracks)} data-album-id={album.id} class="hidden"></div>
 </Layout>
 
 <script>
@@ -491,7 +491,8 @@ const albumSchema = {
     updateRepeatIconUI($repeatMode.get());
 
     const cur = $currentTrack.get();
-    if (cur) {
+    const currentAlbumId = document.getElementById('album-raw-tracks')?.getAttribute('data-album-id');
+    if (cur && cur.albumId === currentAlbumId) {
       if (title) title.textContent = cur.title;
       if (artist) artist.textContent = cur.artist;
       if (category) category.textContent = cur.album.toUpperCase();
@@ -502,7 +503,8 @@ const albumSchema = {
 
   // Subscribe to reactive stores
   $currentTrack.subscribe((track) => {
-    if (track) {
+    const currentAlbumId = document.getElementById('album-raw-tracks')?.getAttribute('data-album-id');
+    if (track && track.albumId === currentAlbumId) {
       const title = document.getElementById('main-track-title');
       const artist = document.getElementById('main-artist-name');
       const category = document.getElementById('main-category-badge');
@@ -512,6 +514,8 @@ const albumSchema = {
 
       update5CardCarouselStage(track);
       highlightActivePlaylistItem(track.id);
+    } else {
+      highlightActivePlaylistItem('');
     }
   });
 

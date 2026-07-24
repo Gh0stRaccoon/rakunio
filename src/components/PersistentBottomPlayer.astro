@@ -164,13 +164,19 @@ import { withBase } from '../utils/base';
     const currentPath = window.location.pathname.replace(/\/+$/, '') || '/';
     const baseHome = withBase('/').replace(/\/+$/, '') || '/';
 
-    const isHome = currentPath === '/' || currentPath === baseHome || currentPath === '/rakunio' || currentPath.endsWith('/rakunio');
+    const isHome = currentPath === '/' || currentPath === baseHome;
 
-    if (currentTrack && !isHome) {
-      const isTrackPage = currentPath.includes(`/track/${currentTrack.id}`);
-      const isAlbumPage = currentPath.includes(`/album/${currentTrack.albumId}`);
+    if (currentTrack) {
+      let isCurrentTrackVisibleOnThisPage = false;
 
-      const isCurrentTrackVisibleOnThisPage = isTrackPage || isAlbumPage;
+      if (isHome) {
+        // On home page, visible if current track's album is rakunio (default playlist)
+        isCurrentTrackVisibleOnThisPage = currentTrack.albumId === 'rakunio';
+      } else {
+        const isTrackPage = currentPath.includes(`/track/${currentTrack.id}`);
+        const isAlbumPage = currentPath.includes(`/album/${currentTrack.albumId}`);
+        isCurrentTrackVisibleOnThisPage = isTrackPage || isAlbumPage;
+      }
 
       if (!isCurrentTrackVisibleOnThisPage) {
         playerBar.classList.remove('hidden');

@@ -7,7 +7,7 @@
 
 <script>
   import { AudioEngine } from '../lib/audio/AudioEngine';
-  import { $isPlaying } from '../lib/audio/PlayerStore';
+  import { $isPlaying, $currentTrack } from '../lib/audio/PlayerStore';
 
   let animationFrameId: number | null = null;
   let canvas: HTMLCanvasElement | null = null;
@@ -58,8 +58,20 @@
 
     const analyser = AudioEngine.getAnalyser();
     const isPlaying = $isPlaying.get();
+    const currentTrack = $currentTrack.get();
+    const currentPath = window.location.pathname.replace(/\/+$/, '') || '/';
+    const isHome = currentPath === '/' || currentPath.endsWith('/rakunio');
 
-    if (!analyser || !isPlaying) {
+    let isTrackPlayingOnThisPage = false;
+    if (currentTrack && isPlaying) {
+      if (isHome) {
+        isTrackPlayingOnThisPage = currentTrack.albumId === 'rakunio';
+      } else {
+        isTrackPlayingOnThisPage = currentPath.includes(`/album/${currentTrack.albumId}`) || currentPath.includes(`/track/${currentTrack.id}`);
+      }
+    }
+
+    if (!analyser || !isPlaying || !isTrackPlayingOnThisPage) {
       drawIdleState(ctx, width, height);
       return;
     }
