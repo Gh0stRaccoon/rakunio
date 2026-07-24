@@ -371,7 +371,6 @@ const albumSchema = {
 
     playBtn?.addEventListener('click', () => {
       const current = $currentTrack.get();
-      // If current track is not from this album, set queue to this album and play first track
       const rawContainer = document.getElementById('album-raw-tracks');
       if (rawContainer) {
         const albumTracks = JSON.parse(rawContainer.getAttribute('data-tracks') || '[]');
@@ -486,12 +485,14 @@ const albumSchema = {
     extractPlaylistID3Covers();
 
     // Initial sync of current track and button states
-    updatePlayIconUI($isPlaying.get());
+    const cur = $currentTrack.get();
+    const currentAlbumId = document.getElementById('album-raw-tracks')?.getAttribute('data-album-id');
+    const isThisAlbumPlaying = $isPlaying.get() && cur?.albumId === currentAlbumId;
+
+    updatePlayIconUI(isThisAlbumPlaying);
     updateShuffleIconUI($isShuffle.get());
     updateRepeatIconUI($repeatMode.get());
 
-    const cur = $currentTrack.get();
-    const currentAlbumId = document.getElementById('album-raw-tracks')?.getAttribute('data-album-id');
     if (cur && cur.albumId === currentAlbumId) {
       if (title) title.textContent = cur.title;
       if (artist) artist.textContent = cur.artist;
@@ -520,7 +521,10 @@ const albumSchema = {
   });
 
   $isPlaying.subscribe((playing) => {
-    updatePlayIconUI(playing);
+    const currentAlbumId = document.getElementById('album-raw-tracks')?.getAttribute('data-album-id');
+    const cur = $currentTrack.get();
+    const isThisAlbumPlaying = playing && cur?.albumId === currentAlbumId;
+    updatePlayIconUI(isThisAlbumPlaying);
   });
 
   $isShuffle.subscribe((isShuffle) => {
