@@ -1457,18 +1457,26 @@ const albumSchema = {
       box-sizing: border-box;
     }
     .player-top-row {
-      grid-template-columns: 1fr;
+      grid-template-columns: 1fr !important;
       gap: 24px;
     }
-    #player-left-presentation,
-    #player-left-player {
-      grid-column: 1;
-      grid-row: 1;
+    #album-top-container #player-left-presentation,
+    #album-top-container #player-left-player {
+      grid-column: 1 !important;
+      grid-row: 1 !important;
+      width: 100%;
     }
-    #player-right-presentation,
-    #player-right-player {
-      grid-column: 1;
-      grid-row: 2;
+    #album-top-container #player-right-presentation,
+    #album-top-container #player-right-player {
+      grid-column: 1 !important;
+      grid-row: 2 !important;
+      width: 100%;
+      margin-top: 8px;
+    }
+    .album-description-box {
+      width: 100%;
+      word-break: break-word;
+      overflow-wrap: break-word;
     }
     .volume-row {
       display: none !important;
@@ -1491,6 +1499,14 @@ const albumSchema = {
   }
 
   @media (max-width: 640px) {
+    .album-portrait-stage {
+      max-width: min(260px, 78vw);
+      height: min(260px, 78vw);
+    }
+    .album-play-hero-btn {
+      width: 100%;
+      justify-content: center;
+    }
     .album-aura-container {
       height: 270px;
       overflow: visible;
