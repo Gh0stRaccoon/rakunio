@@ -109,31 +109,59 @@ import { withBase } from '../utils/base';
     const seekBar = document.getElementById('bottom-seek-bar');
     const clickableInfo = document.getElementById('bottom-track-info-clickable');
 
-    playBtn?.addEventListener('click', () => togglePlay());
-    btnNext?.addEventListener('click', () => playNext());
-    btnPrev?.addEventListener('click', () => playPrevious());
-    btnShuffle?.addEventListener('click', () => toggleShuffle());
-    btnRepeat?.addEventListener('click', () => cycleRepeatMode());
+    if (playBtn && !(playBtn as any)._bound) {
+      (playBtn as any)._bound = true;
+      playBtn.addEventListener('click', () => togglePlay());
+    }
 
-    volSlider?.addEventListener('input', (e) => {
-      setVolume(parseFloat((e.target as HTMLInputElement).value));
-    });
+    if (btnNext && !(btnNext as any)._bound) {
+      (btnNext as any)._bound = true;
+      btnNext.addEventListener('click', () => playNext());
+    }
 
-    seekBar?.addEventListener('click', (e) => {
-      const rect = seekBar.getBoundingClientRect();
-      const pct = (e.clientX - rect.left) / rect.width;
-      const dur = $duration.get();
-      if (dur > 0) {
-        AudioEngine.seek(pct * dur);
-      }
-    });
+    if (btnPrev && !(btnPrev as any)._bound) {
+      (btnPrev as any)._bound = true;
+      btnPrev.addEventListener('click', () => playPrevious());
+    }
 
-    clickableInfo?.addEventListener('click', () => {
-      const cur = $currentTrack.get();
-      if (cur) {
-        navigate(withBase(`/track/${cur.id}`));
-      }
-    });
+    if (btnShuffle && !(btnShuffle as any)._bound) {
+      (btnShuffle as any)._bound = true;
+      btnShuffle.addEventListener('click', () => toggleShuffle());
+    }
+
+    if (btnRepeat && !(btnRepeat as any)._bound) {
+      (btnRepeat as any)._bound = true;
+      btnRepeat.addEventListener('click', () => cycleRepeatMode());
+    }
+
+    if (volSlider && !(volSlider as any)._bound) {
+      (volSlider as any)._bound = true;
+      volSlider.addEventListener('input', (e) => {
+        setVolume(parseFloat((e.target as HTMLInputElement).value));
+      });
+    }
+
+    if (seekBar && !(seekBar as any)._bound) {
+      (seekBar as any)._bound = true;
+      seekBar.addEventListener('click', (e) => {
+        const rect = seekBar.getBoundingClientRect();
+        const pct = (e.clientX - rect.left) / rect.width;
+        const dur = $duration.get();
+        if (dur > 0) {
+          AudioEngine.seek(pct * dur);
+        }
+      });
+    }
+
+    if (clickableInfo && !(clickableInfo as any)._bound) {
+      (clickableInfo as any)._bound = true;
+      clickableInfo.addEventListener('click', () => {
+        const cur = $currentTrack.get();
+        if (cur) {
+          navigate(withBase(`/track/${cur.id}`));
+        }
+      });
+    }
 
     updateUI();
   }
@@ -164,19 +192,13 @@ import { withBase } from '../utils/base';
     const currentPath = window.location.pathname.replace(/\/+$/, '') || '/';
     const baseHome = withBase('/').replace(/\/+$/, '') || '/';
 
-    const isHome = currentPath === '/' || currentPath === baseHome;
+    const isHome = currentPath === '/' || currentPath === baseHome || currentPath === '/rakunio' || currentPath.endsWith('/rakunio');
 
-    if (currentTrack) {
-      let isCurrentTrackVisibleOnThisPage = false;
+    if (currentTrack && !isHome) {
+      const isTrackPage = currentPath.includes(`/track/${currentTrack.id}`);
+      const isAlbumPage = currentPath.includes(`/album/${currentTrack.albumId}`);
 
-      if (isHome) {
-        // On home page, visible if current track's album is rakunio (default playlist)
-        isCurrentTrackVisibleOnThisPage = currentTrack.albumId === 'rakunio';
-      } else {
-        const isTrackPage = currentPath.includes(`/track/${currentTrack.id}`);
-        const isAlbumPage = currentPath.includes(`/album/${currentTrack.albumId}`);
-        isCurrentTrackVisibleOnThisPage = isTrackPage || isAlbumPage;
-      }
+      const isCurrentTrackVisibleOnThisPage = isTrackPage || isAlbumPage;
 
       if (!isCurrentTrackVisibleOnThisPage) {
         playerBar.classList.remove('hidden');

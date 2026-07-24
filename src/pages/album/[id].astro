@@ -413,57 +413,11 @@ const albumSchema = {
     const category = document.getElementById('main-category-badge');
     const seekBar = document.getElementById('seek-bar');
 
-    playBtn?.addEventListener('click', () => {
-      const current = $currentTrack.get();
-      // If current track is not from this album, set queue to this album and play first track
-      const rawContainer = document.getElementById('album-raw-tracks');
-      if (rawContainer) {
-        const albumTracks = JSON.parse(rawContainer.getAttribute('data-tracks') || '[]');
-        if (!current || !albumTracks.some((t: any) => t.id === current.id)) {
-          setQueue(albumTracks);
-          playTrack(albumTracks[0], true);
-          return;
-        }
-      }
-      togglePlay();
-    });
-
-    btnNext?.addEventListener('click', () => triggerNext3D());
-    btnPrev?.addEventListener('click', () => triggerPrev3D());
-    btnShuffle?.addEventListener('click', () => toggleShuffle());
-    btnRepeat?.addEventListener('click', () => cycleRepeatMode());
-
-    btnToggleLyricsOverlay?.addEventListener('click', (e) => {
-      e.stopPropagation();
-      isMobileLyricsOverlayOpen = !isMobileLyricsOverlayOpen;
-      if (mobileLyricsOverlay) {
-        if (isMobileLyricsOverlayOpen) {
-          mobileLyricsOverlay.classList.add('active');
-          setTimeout(() => window.dispatchEvent(new CustomEvent('realign-lrc')), 100);
-        } else {
-          mobileLyricsOverlay.classList.remove('active');
-        }
-      }
-    });
-
-    btnCloseLyricsOverlay?.addEventListener('click', (e) => {
-      e.stopPropagation();
-      isMobileLyricsOverlayOpen = false;
-      if (mobileLyricsOverlay) mobileLyricsOverlay.classList.remove('active');
-    });
-
-    coverStage?.addEventListener('click', (e) => {
-      if ((e.target as HTMLElement).closest('#mobile-lyrics-overlay')) return;
-
-      const card = (e.target as HTMLElement).closest('.cover-card');
-      if (!card) return;
-      const pos = card.getAttribute('data-pos');
-      if (pos === '1') {
-        triggerNext3D();
-      } else if (pos === '-1') {
-        triggerPrev3D();
-      } else if (pos === '0') {
+    if (playBtn && !(playBtn as any)._bound) {
+      (playBtn as any)._bound = true;
+      playBtn.addEventListener('click', () => {
         const current = $currentTrack.get();
+        // If current track is not from this album, set queue to this album and play first track
         const rawContainer = document.getElementById('album-raw-tracks');
         if (rawContainer) {
           const albumTracks = JSON.parse(rawContainer.getAttribute('data-tracks') || '[]');
@@ -474,72 +428,159 @@ const albumSchema = {
           }
         }
         togglePlay();
-      }
-    });
+      });
+    }
 
-    btnTogglePlaylist?.addEventListener('click', () => {
-      isPlaylistVisible = !isPlaylistVisible;
-      if (playlistContainer) {
-        if (isPlaylistVisible) {
-          playlistContainer.classList.remove('collapsed');
-          if (toggleLabel) toggleLabel.textContent = 'Ocultar lista';
-        } else {
-          playlistContainer.classList.add('collapsed');
-          if (toggleLabel) toggleLabel.textContent = 'Mostrar lista';
+    if (btnNext && !(btnNext as any)._bound) {
+      (btnNext as any)._bound = true;
+      btnNext.addEventListener('click', () => triggerNext3D());
+    }
+
+    if (btnPrev && !(btnPrev as any)._bound) {
+      (btnPrev as any)._bound = true;
+      btnPrev.addEventListener('click', () => triggerPrev3D());
+    }
+
+    if (btnShuffle && !(btnShuffle as any)._bound) {
+      (btnShuffle as any)._bound = true;
+      btnShuffle.addEventListener('click', () => toggleShuffle());
+    }
+
+    if (btnRepeat && !(btnRepeat as any)._bound) {
+      (btnRepeat as any)._bound = true;
+      btnRepeat.addEventListener('click', () => cycleRepeatMode());
+    }
+
+    if (btnToggleLyricsOverlay && !(btnToggleLyricsOverlay as any)._bound) {
+      (btnToggleLyricsOverlay as any)._bound = true;
+      btnToggleLyricsOverlay.addEventListener('click', (e) => {
+        e.stopPropagation();
+        isMobileLyricsOverlayOpen = !isMobileLyricsOverlayOpen;
+        if (mobileLyricsOverlay) {
+          if (isMobileLyricsOverlayOpen) {
+            mobileLyricsOverlay.classList.add('active');
+            setTimeout(() => window.dispatchEvent(new CustomEvent('realign-lrc')), 100);
+          } else {
+            mobileLyricsOverlay.classList.remove('active');
+          }
         }
-      }
-    });
+      });
+    }
 
-    volSlider?.addEventListener('input', (e) => {
-      setVolume(parseFloat((e.target as HTMLInputElement).value));
-    });
+    if (btnCloseLyricsOverlay && !(btnCloseLyricsOverlay as any)._bound) {
+      (btnCloseLyricsOverlay as any)._bound = true;
+      btnCloseLyricsOverlay.addEventListener('click', (e) => {
+        e.stopPropagation();
+        isMobileLyricsOverlayOpen = false;
+        if (mobileLyricsOverlay) mobileLyricsOverlay.classList.remove('active');
+      });
+    }
 
-    seekBar?.addEventListener('click', (e) => {
-      const rect = seekBar.getBoundingClientRect();
-      const pct = (e.clientX - rect.left) / rect.width;
-      const dur = $duration.get();
-      if (dur > 0) {
-        AudioEngine.seek(pct * dur);
-      }
-    });
+    if (coverStage && !(coverStage as any)._bound) {
+      (coverStage as any)._bound = true;
+      coverStage.addEventListener('click', (e) => {
+        if ((e.target as HTMLElement).closest('#mobile-lyrics-overlay')) return;
+
+        const card = (e.target as HTMLElement).closest('.cover-card');
+        if (!card) return;
+        const pos = card.getAttribute('data-pos');
+        if (pos === '1') {
+          triggerNext3D();
+        } else if (pos === '-1') {
+          triggerPrev3D();
+        } else if (pos === '0') {
+          const current = $currentTrack.get();
+          const rawContainer = document.getElementById('album-raw-tracks');
+          if (rawContainer) {
+            const albumTracks = JSON.parse(rawContainer.getAttribute('data-tracks') || '[]');
+            if (!current || !albumTracks.some((t: any) => t.id === current.id)) {
+              setQueue(albumTracks);
+              playTrack(albumTracks[0], true);
+              return;
+            }
+          }
+          togglePlay();
+        }
+      });
+    }
+
+    if (btnTogglePlaylist && !(btnTogglePlaylist as any)._bound) {
+      (btnTogglePlaylist as any)._bound = true;
+      btnTogglePlaylist.addEventListener('click', () => {
+        isPlaylistVisible = !isPlaylistVisible;
+        if (playlistContainer) {
+          if (isPlaylistVisible) {
+            playlistContainer.classList.remove('collapsed');
+            if (toggleLabel) toggleLabel.textContent = 'Ocultar lista';
+          } else {
+            playlistContainer.classList.add('collapsed');
+            if (toggleLabel) toggleLabel.textContent = 'Mostrar lista';
+          }
+        }
+      });
+    }
+
+    if (volSlider && !(volSlider as any)._bound) {
+      (volSlider as any)._bound = true;
+      volSlider.addEventListener('input', (e) => {
+        setVolume(parseFloat((e.target as HTMLInputElement).value));
+      });
+    }
+
+    if (seekBar && !(seekBar as any)._bound) {
+      (seekBar as any)._bound = true;
+      seekBar.addEventListener('click', (e) => {
+        const rect = seekBar.getBoundingClientRect();
+        const pct = (e.clientX - rect.left) / rect.width;
+        const dur = $duration.get();
+        if (dur > 0) {
+          AudioEngine.seek(pct * dur);
+        }
+      });
+    }
 
     const btnPlayAlbumHero = document.getElementById('btn-play-album-hero');
-
-    btnPlayAlbumHero?.addEventListener('click', () => {
-      const rawContainer = document.getElementById('album-raw-tracks');
-      if (rawContainer) {
-        const albumTracks = JSON.parse(rawContainer.getAttribute('data-tracks') || '[]');
-        if (albumTracks.length > 0) {
-          setQueue(albumTracks);
-          playTrack(albumTracks[0], true);
-          switchToPlayerMode();
-        }
-      }
-    });
-
-    const playlistRows = document.querySelectorAll('.playlist-track-row');
-    playlistRows.forEach((row) => {
-      row.addEventListener('click', (e) => {
-        const shareBtn = (e.target as HTMLElement).closest('[data-share-id]');
-        if (shareBtn) {
-          e.stopPropagation();
-          const shareId = shareBtn.getAttribute('data-share-id');
-          if (shareId) copyTrackShareLink(shareId);
-          return;
-        }
-
-        const id = row.getAttribute('data-track-id');
+    if (btnPlayAlbumHero && !(btnPlayAlbumHero as any)._bound) {
+      (btnPlayAlbumHero as any)._bound = true;
+      btnPlayAlbumHero.addEventListener('click', () => {
         const rawContainer = document.getElementById('album-raw-tracks');
         if (rawContainer) {
           const albumTracks = JSON.parse(rawContainer.getAttribute('data-tracks') || '[]');
-          const found = albumTracks.find((t: any) => t.id === id);
-          if (found) {
+          if (albumTracks.length > 0) {
             setQueue(albumTracks);
-            playTrack(found, true);
+            playTrack(albumTracks[0], true);
             switchToPlayerMode();
           }
         }
       });
+    }
+
+    const playlistRows = document.querySelectorAll('.playlist-track-row');
+    playlistRows.forEach((row) => {
+      if (!(row as any)._bound) {
+        (row as any)._bound = true;
+        row.addEventListener('click', (e) => {
+          const shareBtn = (e.target as HTMLElement).closest('[data-share-id]');
+          if (shareBtn) {
+            e.stopPropagation();
+            const shareId = shareBtn.getAttribute('data-share-id');
+            if (shareId) copyTrackShareLink(shareId);
+            return;
+          }
+
+          const id = row.getAttribute('data-track-id');
+          const rawContainer = document.getElementById('album-raw-tracks');
+          if (rawContainer) {
+            const albumTracks = JSON.parse(rawContainer.getAttribute('data-tracks') || '[]');
+            const found = albumTracks.find((t: any) => t.id === id);
+            if (found) {
+              setQueue(albumTracks);
+              playTrack(found, true);
+              switchToPlayerMode();
+            }
+          }
+        });
+      }
     });
 
     extractPlaylistID3Covers();
