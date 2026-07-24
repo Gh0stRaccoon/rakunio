@@ -620,14 +620,8 @@ const albumSchema = {
   function switchToPlayerMode() {
     const topContainer = document.getElementById('album-top-container');
     if (!topContainer) return;
-    topContainer.style.opacity = '0';
-    topContainer.style.transform = 'scale(0.98)';
-    setTimeout(() => {
-      topContainer.classList.remove('mode-presentation');
-      topContainer.classList.add('mode-player');
-      topContainer.style.opacity = '1';
-      topContainer.style.transform = 'scale(1)';
-    }, 220);
+    topContainer.classList.remove('mode-presentation');
+    topContainer.classList.add('mode-player');
   }
 
   // Subscribe to reactive stores
@@ -1466,6 +1460,16 @@ const albumSchema = {
       grid-template-columns: 1fr;
       gap: 24px;
     }
+    #player-left-presentation,
+    #player-left-player {
+      grid-column: 1;
+      grid-row: 1;
+    }
+    #player-right-presentation,
+    #player-right-player {
+      grid-column: 1;
+      grid-row: 2;
+    }
     .volume-row {
       display: none !important;
     }
@@ -1560,12 +1564,60 @@ const albumSchema = {
     transition: opacity 0.35s cubic-bezier(0.25, 1, 0.5, 1), transform 0.35s cubic-bezier(0.25, 1, 0.5, 1);
   }
 
-  .mode-presentation .player-view {
-    display: none !important;
+  #player-left-presentation,
+  #player-left-player {
+    grid-column: 1;
+    grid-row: 1;
+    transition: opacity 0.48s cubic-bezier(0.16, 1, 0.3, 1),
+                transform 0.48s cubic-bezier(0.16, 1, 0.3, 1),
+                filter 0.48s cubic-bezier(0.16, 1, 0.3, 1),
+                visibility 0.48s cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: opacity, transform, filter;
   }
 
+  #player-right-presentation,
+  #player-right-player {
+    grid-column: 2;
+    grid-row: 1;
+    transition: opacity 0.48s cubic-bezier(0.16, 1, 0.3, 1),
+                transform 0.48s cubic-bezier(0.16, 1, 0.3, 1),
+                filter 0.48s cubic-bezier(0.16, 1, 0.3, 1),
+                visibility 0.48s cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: opacity, transform, filter;
+  }
+
+  /* Mode Presentation State */
+  .mode-presentation .presentation-view {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+    filter: blur(0px);
+    pointer-events: auto;
+    visibility: visible;
+  }
+
+  .mode-presentation .player-view {
+    opacity: 0;
+    transform: scale(0.97) translateY(8px);
+    filter: blur(5px);
+    pointer-events: none;
+    visibility: hidden;
+  }
+
+  /* Mode Player State */
   .mode-player .presentation-view {
-    display: none !important;
+    opacity: 0;
+    transform: scale(0.97) translateY(-8px);
+    filter: blur(5px);
+    pointer-events: none;
+    visibility: hidden;
+  }
+
+  .mode-player .player-view {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+    filter: blur(0px);
+    pointer-events: auto;
+    visibility: visible;
   }
 
   .presentation-aura {
