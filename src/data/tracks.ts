@@ -128,15 +128,15 @@ function scanMusicGlob(): { tracks: Track[]; albums: Album[] } {
     tracks.push(trackObj);
 
     if (!albumsMap.has(albumId)) {
-      // Find matching folder cover image
-      let albumCover = withBase('/rakunio_logo.jpeg');
+      // Find matching folder cover image (prioritize webp for speed)
+      let albumCover = withBase('/rakunio_logo.webp');
       for (const cPath in coverModules) {
         if (cPath.includes(`/music/${folder}/`)) {
           const rawCoverUrl = coverModules[cPath];
           if (rawCoverUrl) {
             const cleanCoverPath = rawCoverUrl.startsWith('/') ? rawCoverUrl : `/${rawCoverUrl}`;
             albumCover = withBase(cleanCoverPath.replace(/^\/(rakunio\/)+/, '/'));
-            break;
+            if (cPath.endsWith('.webp')) break;
           }
         }
       }
