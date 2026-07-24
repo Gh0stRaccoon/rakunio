@@ -1,18 +1,9 @@
 ---
-import { ALBUMS } from "../data/tracks";
 import { withBase } from "../utils/base";
 
-const targetUrl = withBase(`/album/${ALBUMS[0]?.id || 'rakunio'}`);
+const target = withBase('/album/rakunio');
 ---
-
-<!DOCTYPE html>
-<html lang="es">
-  <head>
-    <meta http-equiv="refresh" content={`0;url=${targetUrl}`} />
-    <script is:inline data-url={targetUrl}>
-      const target = document.currentScript?.getAttribute('data-url');
-      if (target) window.location.replace(target);
-    </script>
-  </head>
-  <body></body>
-</html>
+<script is:inline define:vars={{ target }}>
+  window.location.href = target;
+</script>
+<meta http-equiv="refresh" content={`0;url=${target}`} />

@@ -55,7 +55,7 @@ const currentPath = Astro.url.pathname;
   <body>
     <!-- Mobile Top Header Bar (only visible on mobile <= 960px) -->
     <header class="mobile-top-bar glass-panel">
-      <a href={withBase('/')} class="mobile-brand">
+      <a href={withBase('/album/rakunio')} class="mobile-brand">
         <svg class="brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 14a4 4 0 1 1 4-4 4 4 0 0 1-4 4z"/>
           <circle cx="12" cy="12" r="2"/>
@@ -108,7 +108,6 @@ const currentPath = Astro.url.pathname;
 
         <nav class="sidebar-nav">
           <span class="nav-section-title">Carpetas</span>
-
           {ALBUMS.map((album) => (
             <a href={withBase(`/album/${album.id}`)} class={`nav-link ${currentPath.includes(`/album/${album.id}`) ? 'active' : ''}`}>
               <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
