@@ -1,0 +1,25 @@
+{
+  "name": "Rakun.io — Beats & Music Player",
+  "short_name": "Rakun.io",
+  "description": "Reproductor de beats con espectro en vivo, letras sincronizadas LRC y reproducción offline continua.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#181412",
+  "theme_color": "#b56938",
+  "icons": [
+    {
+      "src": "rakunio_logo.jpeg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "rakunio_logo.webp",
+      "sizes": "512x512",
+      "type": "image/webp",
+      "purpose": "any"
+    }
+  ]
+}

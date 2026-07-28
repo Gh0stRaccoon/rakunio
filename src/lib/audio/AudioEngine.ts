@@ -6,6 +6,7 @@ import {
   $volume, 
   $isMuted,
   $repeatMode,
+  $queue,
   playNext,
   playPrevious,
   togglePlay
@@ -19,6 +20,7 @@ class AudioEngineSingleton {
   private isInitialized = false;
   private playPromise: Promise<void> | null = null;
   private isChangingTrack = false;
+  private preloader: HTMLAudioElement | null = null;
 
   public init() {
     if (typeof window === 'undefined' || this.isInitialized) return;
@@ -26,7 +28,7 @@ class AudioEngineSingleton {
 
     this.audio = new Audio();
     this.audio.crossOrigin = 'anonymous';
-    this.audio.preload = 'metadata';
+    this.audio.preload = 'auto';
 
     const initialTrack = $currentTrack.get();
     if (initialTrack) {
@@ -38,6 +40,7 @@ class AudioEngineSingleton {
       if (!$isPlaying.get()) {
         $isPlaying.set(true);
       }
+      this.updatePositionState();
     });
 
     this.audio.addEventListener('pause', () => {
@@ -46,17 +49,23 @@ class AudioEngineSingleton {
       if ($isPlaying.get()) {
         $isPlaying.set(false);
       }
+      this.updatePositionState();
     });
 
     this.audio.addEventListener('timeupdate', () => {
       if (this.audio) {
         $currentTime.set(this.audio.currentTime);
+        // Periodically sync position state for lockscreen timeline
+        if (Math.floor(this.audio.currentTime) % 2 === 0) {
+          this.updatePositionState();
+        }
       }
     });
 
     this.audio.addEventListener('loadedmetadata', () => {
       if (this.audio) {
         $duration.set(this.audio.duration || 0);
+        this.updatePositionState();
       }
     });
 
@@ -69,6 +78,20 @@ class AudioEngineSingleton {
         }
       } else {
         playNext();
+      }
+    });
+
+    this.audio.addEventListener('error', (e) => {
+      console.warn('[AudioEngine] Audio element encountered error, attempting recovery:', e);
+      if (this.audio && this.audio.src) {
+        const currentSrc = this.audio.src;
+        // Simple retry mechanism if audio stalls/fails
+        setTimeout(() => {
+          if (this.audio && $isPlaying.get()) {
+            this.audio.src = currentSrc;
+            this.audio.play().catch(() => {});
+          }
+        }, 1000);
       }
     });
 
@@ -106,6 +129,7 @@ class AudioEngineSingleton {
         }
 
         this.updateMediaSession(track);
+        this.preloadNextTrack();
       }
     });
 
@@ -213,6 +237,7 @@ class AudioEngineSingleton {
     if (this.audio) {
       this.audio.currentTime = seconds;
       $currentTime.set(seconds);
+      this.updatePositionState();
     }
   }
 
@@ -222,6 +247,45 @@ class AudioEngineSingleton {
 
   public getAudioElement(): HTMLAudioElement | null {
     return this.audio;
+  }
+
+  private updatePositionState() {
+    if ('mediaSession' in navigator && 'setPositionState' in navigator.mediaSession) {
+      if (this.audio && !isNaN(this.audio.duration) && isFinite(this.audio.duration) && this.audio.duration > 0) {
+        try {
+          navigator.mediaSession.setPositionState({
+            duration: this.audio.duration,
+            playbackRate: this.audio.playbackRate || 1.0,
+            position: Math.min(Math.max(0, this.audio.currentTime || 0), this.audio.duration)
+          });
+        } catch (e) {
+          // Ignore state sync exceptions
+        }
+      }
+    }
+  }
+
+  private preloadNextTrack() {
+    if (typeof window === 'undefined') return;
+    const queue = $queue.get();
+    const current = $currentTrack.get();
+    if (!current || queue.length <= 1) return;
+
+    const currentIndex = queue.findIndex(t => t.id === current.id);
+    const nextIndex = (currentIndex + 1) % queue.length;
+    const nextTrack = queue[nextIndex];
+
+    if (nextTrack && nextTrack.audioUrl) {
+      try {
+        if (!this.preloader) {
+          this.preloader = new Audio();
+          this.preloader.preload = 'auto';
+        }
+        this.preloader.src = nextTrack.audioUrl;
+      } catch (e) {
+        // Preload failure non-critical
+      }
+    }
   }
 
   private updateMediaSession(track: any) {
@@ -234,6 +298,7 @@ class AudioEngineSingleton {
           { src: track.cover, sizes: '512x512', type: 'image/jpeg' }
         ]
       });
+      this.updatePositionState();
     }
   }
 

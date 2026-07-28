@@ -52,9 +52,26 @@ const currentPath = Astro.url.pathname;
     <meta property="og:url" content={canonicalURL} />
     <meta property="og:image" content={image} />
 
+    <!-- PWA & Offline Support -->
+    <link rel="manifest" href={withBase('/manifest.webmanifest')} />
+    <meta name="theme-color" content="#b56938" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
     {jsonLd && (
       <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
     )}
+
+    <script is:inline define:vars={{ swUrl: withBase('/sw.js') }}>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register(swUrl, { scope: './' })
+            .then((reg) => console.log('[SW] Registered successfully:', reg.scope))
+            .catch((err) => console.warn('[SW] Registration failed:', err));
+        });
+      }
+    </script>
 
     <ClientRouter />
   </head>

@@ -69,8 +69,21 @@ import { withBase } from '../utils/base';
       </div>
     </div>
 
-    <!-- Right: Volume -->
+    <!-- Right: Volume & Offline Badge -->
     <div class="bottom-right-group">
+      <span id="offline-badge" class="offline-badge hidden" title="Modo sin conexión activo (reproducción desde caché)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="offline-icon">
+          <line x1="1" y1="1" x2="23" y2="23"/>
+          <path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/>
+          <path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/>
+          <path d="M10.71 5.05A16 16 0 0 1 22.58 9"/>
+          <path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/>
+          <path d="M8.53 16.11a6 6 0 0 1 6.95 0"/>
+          <line x1="12" y1="20" x2="12.01" y2="20"/>
+        </svg>
+        <span>Offline</span>
+      </span>
+
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="bottom-vol-icon">
         <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="currentColor"/>
       </svg>
@@ -291,8 +304,25 @@ import { withBase } from '../utils/base';
     return `${m}:${s < 10 ? '0' : ''}${s}`;
   }
 
+  function updateOnlineStatus() {
+    const badge = document.getElementById('offline-badge');
+    if (badge) {
+      if (!navigator.onLine) {
+        badge.classList.remove('hidden');
+      } else {
+        badge.classList.add('hidden');
+      }
+    }
+  }
+
+  if (typeof window !== 'undefined') {
+    window.addEventListener('online', updateOnlineStatus);
+    window.addEventListener('offline', updateOnlineStatus);
+  }
+
   document.addEventListener('astro:page-load', () => {
     initBottomPlayerBar();
+    updateOnlineStatus();
   });
 </script>
 
@@ -476,6 +506,24 @@ import { withBase } from '../utils/base';
     width: 0%;
     background: var(--accent-warm);
     border-radius: 2px;
+  }
+
+  .offline-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 8px;
+    background: rgba(220, 38, 38, 0.2);
+    border: 1px solid rgba(239, 68, 68, 0.4);
+    color: #fca5a5;
+    border-radius: var(--radius-full);
+    font-size: 0.7rem;
+    font-weight: 600;
+  }
+
+  .offline-icon {
+    width: 12px;
+    height: 12px;
   }
 
   .bottom-right-group {
