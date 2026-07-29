@@ -479,6 +479,8 @@ const albumSchema = {
                 alt={t.title}
                 class="playlist-thumb"
                 data-audio-url={t.audioUrl}
+                loading="lazy"
+                decoding="async"
               />
               <div class="playlist-track-meta" data-action="play">
                 <span class="playlist-track-name">{t.title}</span>
@@ -818,7 +820,7 @@ const albumSchema = {
       }
     });
 
-    extractPlaylistID3Covers();
+    // Note: Removed eager extractPlaylistID3Covers() on load to avoid saturating network bandwidth with MP3 byte-range fetches
     checkAlbumMode();
 
     // Initial sync of current track and button states
