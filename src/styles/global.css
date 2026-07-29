@@ -91,6 +91,14 @@ body {
   transform: translateY(-2px);
 }
 
+@media (max-width: 768px) {
+  .glass-panel, .glass-panel-interactive {
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    background: rgba(255, 255, 255, 0.88);
+  }
+}
+
 /* Text Accent */
 .text-accent {
   color: var(--accent-warm);

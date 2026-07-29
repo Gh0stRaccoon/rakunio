@@ -1,4 +1,4 @@
-const CACHE_NAME_SHELL = 'rakunio-shell-v1';
+const CACHE_NAME_SHELL = 'rakunio-shell-v2';
 const CACHE_NAME_MEDIA = 'rakunio-media-v1';
 
 const PRECACHE_SHELL = [

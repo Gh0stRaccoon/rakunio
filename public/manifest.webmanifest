@@ -1,4 +1,5 @@
 {
+  "id": "./",
   "name": "Rakun.io — Beats & Music Player",
   "short_name": "Rakun.io",
   "description": "Reproductor de beats con espectro en vivo, letras sincronizadas LRC y reproducción offline continua.",

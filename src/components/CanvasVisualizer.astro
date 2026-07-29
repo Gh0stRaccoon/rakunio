@@ -12,6 +12,8 @@
   let animationFrameId: number | null = null;
   let canvas: HTMLCanvasElement | null = null;
   let ctx: CanvasRenderingContext2D | null = null;
+  let cachedGradient: CanvasGradient | null = null;
+  let lastWidth = 0;
 
   const NUM_BARS = 54;
   const barHeights = new Float32Array(NUM_BARS).fill(6);
@@ -21,45 +23,91 @@
     canvas = document.getElementById('audio-visualizer-canvas') as HTMLCanvasElement;
     if (!canvas) return;
 
-    ctx = canvas.getContext('2d');
+    ctx = canvas.getContext('2d', { alpha: true });
     if (!ctx) return;
 
     resizeCanvas();
+    window.removeEventListener('resize', resizeCanvas);
     window.addEventListener('resize', resizeCanvas);
 
-    if (animationFrameId) {
-      cancelAnimationFrame(animationFrameId);
+    $isPlaying.subscribe((playing) => {
+      if (playing) {
+        startLoop();
+      } else {
+        stopLoop();
+      }
+    });
+
+    document.removeEventListener('visibilitychange', handleVisibilityChange);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    // Initial static frame if paused
+    if (!$isPlaying.get()) {
+      drawOnce();
     }
+  }
+
+  function handleVisibilityChange() {
+    if (document.hidden) {
+      stopLoop();
+    } else if ($isPlaying.get()) {
+      startLoop();
+    }
+  }
+
+  function startLoop() {
+    if (animationFrameId !== null) return;
     renderLoop();
+  }
+
+  function stopLoop() {
+    if (animationFrameId !== null) {
+      cancelAnimationFrame(animationFrameId);
+      animationFrameId = null;
+    }
+    drawOnce();
+  }
+
+  function drawOnce() {
+    if (!canvas || !ctx) return;
+    const width = canvas.width / (window.devicePixelRatio || 1);
+    const height = canvas.height / (window.devicePixelRatio || 1);
+    ctx.clearRect(0, 0, width, height);
+    drawIdleState(ctx, width, height);
   }
 
   function resizeCanvas() {
     if (!canvas) return;
     const rect = canvas.getBoundingClientRect();
-    const dpr = window.devicePixelRatio || 1;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2); // Cap at DPR 2 for performance
     
-    // Set actual render resolution matching device pixel ratio
     canvas.width = rect.width * dpr;
     canvas.height = rect.height * dpr;
 
     if (ctx) {
       ctx.scale(dpr, dpr);
     }
+    cachedGradient = null;
   }
 
   function renderLoop() {
+    if (!$isPlaying.get() || document.hidden) {
+      animationFrameId = null;
+      drawOnce();
+      return;
+    }
+
     animationFrameId = requestAnimationFrame(renderLoop);
 
     if (!canvas || !ctx) return;
-    const width = canvas.width / (window.devicePixelRatio || 1);
-    const height = canvas.height / (window.devicePixelRatio || 1);
+    const width = canvas.width / (Math.min(window.devicePixelRatio || 1, 2));
+    const height = canvas.height / (Math.min(window.devicePixelRatio || 1, 2));
 
     ctx.clearRect(0, 0, width, height);
 
     const analyser = AudioEngine.getAnalyser();
-    const isPlaying = $isPlaying.get();
 
-    if (!analyser || !isPlaying) {
+    if (!analyser) {
       drawIdleState(ctx, width, height);
       return;
     }
@@ -106,17 +154,19 @@
     const LOG_COMPRESSION_K = 3.5;
     const LOG_DENOMINATOR = Math.log10(1 + LOG_COMPRESSION_K);
 
-    // Radiant glowing gradient for bars over cover art
-    const gradient = ctx.createLinearGradient(0, 0, width, 0);
-    gradient.addColorStop(0, '#ffffff');
-    gradient.addColorStop(0.35, '#ffcca7');
-    gradient.addColorStop(0.7, '#f4efe8');
-    gradient.addColorStop(1, '#ffffff');
+    // Reuse gradient object to prevent allocation overhead
+    if (!cachedGradient || lastWidth !== width) {
+      lastWidth = width;
+      cachedGradient = ctx.createLinearGradient(0, 0, width, 0);
+      cachedGradient.addColorStop(0, '#ffffff');
+      cachedGradient.addColorStop(0.35, '#ffcca7');
+      cachedGradient.addColorStop(0.7, '#f4efe8');
+      cachedGradient.addColorStop(1, '#ffffff');
+    }
 
     ctx.save();
-    ctx.fillStyle = gradient;
-    ctx.shadowColor = 'rgba(255, 204, 167, 0.7)';
-    ctx.shadowBlur = 10;
+    ctx.fillStyle = cachedGradient;
+    // NOTE: Removed expensive ctx.shadowBlur to eliminate GPU frame drops on mobile chips (e.g. Kirin / Mali)
 
     for (let i = 0; i < numBars; i++) {
       const normalizedPos = i / numBars; // 0.0 (bass) to 1.0 (treble)
@@ -143,7 +193,7 @@
 
       const targetBarHeight = Math.max(6, logPercent * (height - 6));
 
-      // Ultra-fast dual-speed lerp for instant kick drum bounce
+      // Fast lerp for smooth animation
       const currentBarH = barHeights[i] ?? 6;
       const lerpSpeed = targetBarHeight > currentBarH ? 0.85 : 0.75;
       const nextBarH = currentBarH + (targetBarHeight - currentBarH) * lerpSpeed;
@@ -177,6 +227,7 @@
     width: 270px;
     height: 100%;
     display: block;
-    mix-blend-mode: plus-lighter;
+    opacity: 0.95;
+    will-change: transform;
   }
 </style>

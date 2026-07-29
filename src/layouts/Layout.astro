@@ -67,8 +67,34 @@ const currentPath = Astro.url.pathname;
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
           navigator.serviceWorker.register(swUrl, { scope: './' })
-            .then((reg) => console.log('[SW] Registered successfully:', reg.scope))
+            .then((reg) => {
+              console.log('[SW] Registered successfully:', reg.scope);
+              
+              // Forzar comprobación de actualización en el servidor
+              reg.update();
+
+              // Detectar cuando se instala una nueva versión del Service Worker
+              reg.addEventListener('updatefound', () => {
+                const newWorker = reg.installing;
+                if (!newWorker) return;
+                newWorker.addEventListener('statechange', () => {
+                  if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                    console.log('[SW] Nueva versión detectada, recargando...');
+                    window.location.reload();
+                  }
+                });
+              });
+            })
             .catch((err) => console.warn('[SW] Registration failed:', err));
+
+          // Recargar automáticamente cuando el nuevo Service Worker tome el control
+          let refreshing = false;
+          navigator.serviceWorker.addEventListener('controllerchange', () => {
+            if (!refreshing) {
+              refreshing = true;
+              window.location.reload();
+            }
+          });
         });
       }
     </script>
@@ -134,6 +160,24 @@ const currentPath = Astro.url.pathname;
             </a>
           ))}
         </nav>
+
+        <!-- Sección de instalación PWA usando el elemento HTML <install> y fallback JS -->
+        <div class="sidebar-install-container">
+          <span class="nav-section-title">Aplicación</span>
+          
+          <!-- Elemento nativo declarativo HTML <install> (Web Install API) -->
+          <install id="native-html-install"></install>
+
+          <!-- Botón de respaldo (fallback para navegadores que aún no ejecutan el elemento <install> nativo) -->
+          <button id="pwa-fallback-install-btn" class="install-app-btn" style="display: none;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="install-btn-icon">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            <span>Instalar App</span>
+          </button>
+        </div>
       </aside>
 
       <!-- Right Main Content Canvas -->
@@ -174,7 +218,58 @@ const currentPath = Astro.url.pathname;
         });
       }
 
-      document.addEventListener('astro:page-load', () => initMobileMenu());
+      function initInstallButton() {
+        const nativeInstall = document.getElementById('native-html-install');
+        const fallbackBtn = document.getElementById('pwa-fallback-install-btn');
+        let deferredPrompt: any = null;
+
+        // Ocultar si la aplicación ya se ejecuta en modo standalone PWA
+        const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (navigator as any).standalone;
+        if (isStandalone) {
+          if (nativeInstall) nativeInstall.style.display = 'none';
+          if (fallbackBtn) fallbackBtn.style.display = 'none';
+          return;
+        }
+
+        // Detectar si el navegador soporta nativamente el elemento <install>
+        const supportsNativeInstall = 'HTMLInstallElement' in window || (nativeInstall && !(nativeInstall instanceof HTMLUnknownElement));
+
+        if (!supportsNativeInstall) {
+          // Capturar el evento beforeinstallprompt para navegadores compatibles (Chrome/Edge/Android)
+          window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            if (fallbackBtn) fallbackBtn.style.display = 'flex';
+          });
+
+          fallbackBtn?.addEventListener('click', async () => {
+            // Probar navigator.install() si está disponible (Web Install API)
+            if ('install' in navigator && typeof (navigator as any).install === 'function') {
+              try {
+                await (navigator as any).install();
+                fallbackBtn.style.display = 'none';
+                return;
+              } catch (err) {
+                console.warn('[WebInstall] Error al usar navigator.install:', err);
+              }
+            }
+
+            if (deferredPrompt) {
+              deferredPrompt.prompt();
+              const { outcome } = await deferredPrompt.userChoice;
+              if (outcome === 'accepted') {
+                fallbackBtn.style.display = 'none';
+              }
+              deferredPrompt = null;
+            }
+          });
+        }
+      }
+
+      document.addEventListener('astro:page-load', () => {
+        initMobileMenu();
+        initInstallButton();
+      });
     </script>
   </body>
 </html>
@@ -433,6 +528,51 @@ const currentPath = Astro.url.pathname;
   }
 
   .nav-icon {
+    width: 18px;
+    height: 18px;
+  }
+
+  .sidebar-install-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--glass-border-dark);
+  }
+
+  /* Estilos para el elemento nativo declarativo HTML <install> */
+  install {
+    display: block;
+    width: 100%;
+    border-radius: var(--radius-md);
+  }
+
+  .install-app-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 14px;
+    border-radius: var(--radius-md);
+    background: var(--accent-warm);
+    color: white;
+    font-size: 0.88rem;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+    box-shadow: 0 4px 12px rgba(181, 105, 56, 0.2);
+  }
+
+  .install-app-btn:hover {
+    filter: brightness(1.08);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(181, 105, 56, 0.3);
+  }
+
+  .install-btn-icon {
     width: 18px;
     height: 18px;
   }

@@ -1,43 +1,41 @@
-# Astro Starter Kit: Minimal
+# 🦝 Rakun.io — Music Beats
 
-```sh
-npm create astro@latest -- --template minimal
+**Rakun.io** es una plataforma web personal creada para escuchar y compartir mi música producida con apoyo de Inteligencia Artificial.
+
+---
+
+## 🎵 Sobre el proyecto
+
+Este proyecto nace como un espacio personal para plasmar e interpretar ideas musicales de forma rápida. No busco producciones complejas de estudio tradicional, sino dar vida a canciones personales y maquetas que capturen emociones e historias.
+
+### 🤖 El proceso creativo
+
+1. **Idea original**: Canto mis propias melodías y toco algunos instrumentos o acordes base.
+2. **Co-creación con IA**: Utilizo herramientas como [suno.com](https://suno.com) indicándole los estilos, ritmos y matices que busco.
+3. **Selección y edición**: Pruebo distintas variaciones hasta encontrar la versión que más se acerca a lo que imaginaba y afino los detalles finales.
+
+La Inteligencia Artificial me permite acelerar la etapa de maquetación, pasando de una idea tarareada o tocada en guitarra/teclado a un tema completo listo para escuchar y compartir.
+
+---
+
+## 🎧 Características de la App
+
+- **Reproductor continuo**: Escucha los beats y maquetas sin interrupción al navegar.
+- **Letras sincronizadas**: Visualización dinámica estilo karaoke utilizando archivos `.lrc`.
+- **Organización por carpetas/álbumes**: Exploración sencilla por colecciones temáticas.
+- **Soporte PWA (Offline)**: Instalable en dispositivos móviles para escuchar aun sin conexión.
+
+---
+
+## 💻 Desarrollo local
+
+```bash
+# Instalar dependencias
+npm install
+
+# Iniciar servidor de desarrollo
+npm run dev
+
+# Compilar para producción
+npm run build
 ```
-
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
-
-## 🚀 Project Structure
-
-Inside of your Astro project, you'll see the following folders and files:
-
-```text
-/
-├── public/
-├── src/
-│   └── pages/
-│       └── index.astro
-└── package.json
-```
-
-Astro looks for `.astro` or `.md` files in the `src/pages/` directory. Each page is exposed as a route based on its file name.
-
-There's nothing special about `src/components/`, but that's where we like to put any Astro/React/Vue/Svelte/Preact components.
-
-Any static assets, like images, can be placed in the `public/` directory.
-
-## 🧞 Commands
-
-All commands are run from the root of the project, from a terminal:
-
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
-
-## 👀 Want to learn more?
-
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
