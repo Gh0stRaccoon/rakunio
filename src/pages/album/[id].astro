@@ -5,6 +5,7 @@ import LrcLyrics from "../../components/LrcLyrics.astro";
 import { ALBUMS } from "../../data/tracks";
 import type { Track } from "../../types/track";
 import { withBase } from "../../utils/base";
+import { formatTime } from "../../utils/time";
 
 export function getStaticPaths() {
   return ALBUMS.map((album) => ({
@@ -490,7 +491,7 @@ const albumSchema = {
                 {t.album}
               </span>
               <span class="playlist-track-duration">
-                {t.duration || "2:30"}
+                {formatTime(t.duration)}
               </span>
               <button
                 class="row-share-btn"
@@ -820,7 +821,6 @@ const albumSchema = {
       }
     });
 
-    // Note: Removed eager extractPlaylistID3Covers() on load to avoid saturating network bandwidth with MP3 byte-range fetches
     checkAlbumMode();
 
     // Initial sync of current track and button states
@@ -1000,19 +1000,6 @@ const albumSchema = {
         btn.classList.add("active-track");
       } else {
         btn.classList.remove("active-track");
-      }
-    });
-  }
-
-  async function extractPlaylistID3Covers() {
-    const thumbs = document.querySelectorAll(".playlist-thumb[data-audio-url]");
-    thumbs.forEach(async (thumb) => {
-      const audioUrl = thumb.getAttribute("data-audio-url");
-      if (audioUrl) {
-        const meta = await extractAudioMetadata(audioUrl);
-        if (meta.coverUrl) {
-          (thumb as HTMLImageElement).src = meta.coverUrl;
-        }
       }
     });
   }

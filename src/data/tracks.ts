@@ -1,5 +1,8 @@
 import type { Track, Album, ExternalLinks } from '../types/track';
 import { withBase } from '../utils/base';
+import TRACK_DURATIONS_RAW from './durations.json';
+
+const TRACK_DURATIONS: Record<string, number> = TRACK_DURATIONS_RAW as Record<string, number>;
 
 export const ARTIST_PROFILES: ExternalLinks = {
   spotify: 'https://open.spotify.com/intl-es/artist/1iuT58XabDSD4c1cDDZsaW',
@@ -112,26 +115,11 @@ function scanMusicGlob(): { tracks: Track[]; albums: Album[] } {
     // Attach external streaming links if available or fallback to artist profiles
     const externalLinks: ExternalLinks = TRACK_PLATFORM_LINKS[trackId] || { ...ARTIST_PROFILES };
 
-    const trackObj: Track = {
-      id: trackId,
-      title: titleWithoutExt,
-      artist: artistName,
-      album: albumTitle,
-      albumId,
-      cover: withBase('/rakunio_logo.jpeg'),
-      audioUrl,
-      duration: 150,
-      externalLinks,
-      ...(lrcContent ? { lrcContent } : {})
-    };
-
-    tracks.push(trackObj);
-
     if (!albumsMap.has(albumId)) {
-      // Find matching folder cover image (prioritize webp for speed)
+      // Find matching folder cover image (prioritize album portrait images, then webp)
       let albumCover = withBase('/rakunio_logo.webp');
       for (const cPath in coverModules) {
-        if (cPath.includes(`/music/${folder}/`)) {
+        if (cPath.includes(`/music/${folder}/`) && (cPath.includes('album_port') || cPath.includes('portrait'))) {
           const rawCoverUrl = coverModules[cPath];
           if (rawCoverUrl) {
             const cleanCoverPath = rawCoverUrl.startsWith('/') ? rawCoverUrl : `/${rawCoverUrl}`;
@@ -165,10 +153,38 @@ function scanMusicGlob(): { tracks: Track[]; albums: Album[] } {
       });
     }
 
-    const albumObj = albumsMap.get(albumId);
-    if (albumObj) {
-      albumObj.tracks.push(trackObj);
+    const albumObj = albumsMap.get(albumId)!;
+
+    // Match track cover image if available (supports webp, png, jpg, jpeg with matching name)
+    const coverPathWebp = rawPath.replace(/\.mp3$/i, '.webp');
+    const coverPathPng = rawPath.replace(/\.mp3$/i, '.png');
+    const coverPathJpg = rawPath.replace(/\.mp3$/i, '.jpg');
+    const coverPathJpeg = rawPath.replace(/\.mp3$/i, '.jpeg');
+    const rawTrackCoverUrl = coverModules[coverPathWebp] || coverModules[coverPathPng] || coverModules[coverPathJpg] || coverModules[coverPathJpeg];
+
+    let trackCover = albumObj.cover;
+    if (rawTrackCoverUrl) {
+      const cleanCoverPath = rawTrackCoverUrl.startsWith('/') ? rawTrackCoverUrl : `/${rawTrackCoverUrl}`;
+      trackCover = withBase(cleanCoverPath.replace(/^\/(rakunio\/)+/, '/'));
     }
+
+    const duration = TRACK_DURATIONS[trackId] ?? 150;
+
+    const trackObj: Track = {
+      id: trackId,
+      title: titleWithoutExt,
+      artist: artistName,
+      album: albumTitle,
+      albumId,
+      cover: trackCover,
+      audioUrl,
+      duration,
+      externalLinks,
+      ...(lrcContent ? { lrcContent } : {})
+    };
+
+    tracks.push(trackObj);
+    albumObj.tracks.push(trackObj);
   }
 
   // Ensure 'rakunio' album and tracks are ordered first by default
